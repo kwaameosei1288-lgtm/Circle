@@ -19,22 +19,16 @@ async function waitForUtils() {
         
         console.log('✓ window.utils available');
         
-        // Then ensure Supabase is initialized
+        // Then ensure Supabase is initialized by accessing the getter
         attempts = 0;
-        if (window.utils.ensureInitialized) {
-            console.log('Calling ensureInitialized...');
-            await window.utils.ensureInitialized();
-            console.log('✓ Supabase initialization complete');
-        } else {
-            // Fallback: wait for supabase to be available
-            while (!window.utils?.supabase && attempts < 50) {
-                console.log(`Attempt ${attempts + 1}: Waiting for Supabase...`);
-                await new Promise(resolve => setTimeout(resolve, 100));
-                attempts++;
-            }
-            if (!window.utils?.supabase) {
-                throw new Error('Supabase failed to initialize');
-            }
+        while (!window.utils.supabase && attempts < 50) {
+            console.log(`Attempt ${attempts + 1}: Waiting for Supabase...`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
+        }
+        
+        if (!window.utils.supabase) {
+            throw new Error('Supabase failed to initialize after 5 seconds');
         }
         
         console.log('✓ Utils and Supabase ready');
@@ -200,11 +194,7 @@ async function checkExistingSession() {
             return;
         }
         
-        // Ensure Supabase is initialized
-        if (window.utils.ensureInitialized) {
-            await window.utils.ensureInitialized();
-        }
-        
+        // Ensure Supabase is initialized by accessing the getter
         if (!window.utils.supabase) {
             console.log('Supabase not initialized, skipping existing session check');
             return;
@@ -268,18 +258,10 @@ async function handleLogin(e) {
             throw new Error('System loading... Please wait a moment and try again.');
         }
         
-        // Ensure Supabase is initialized
-        if (window.utils.ensureInitialized) {
-            await window.utils.ensureInitialized();
-        } else if (!window.utils.supabase) {
+        // Ensure Supabase is initialized by accessing the getter
+        if (!window.utils.supabase) {
             console.error('Supabase client not initialized');
-            if (window.utils.initSupabase) {
-                console.log('Attempting manual initialization...');
-                await window.utils.initSupabase();
-            }
-            if (!window.utils.supabase) {
-                throw new Error('Failed to initialize Supabase. Check your configuration.');
-            }
+            throw new Error('System loading... Please wait a moment and try again.');
         }
         
         // Disable submit button and show loading state
@@ -390,11 +372,9 @@ async function handlePasswordChange(e) {
             throw new Error('System not initialized. Please refresh the page.');
         }
         
-        // Ensure Supabase is initialized
-        if (window.utils.ensureInitialized) {
-            await window.utils.ensureInitialized();
-        } else if (!window.utils.supabase) {
-            throw new Error('Supabase initialization failed. Please refresh the page.');
+        // Ensure Supabase is initialized by accessing the getter
+        if (!window.utils.supabase) {
+            throw new Error('System not initialized. Please refresh the page.');
         }
         
         // Validation
