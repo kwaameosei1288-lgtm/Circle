@@ -92,23 +92,75 @@ body {
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-light);
     font-size: 1rem;
+    transition: var(--transition);
 }
 
 .input-group input:focus {
     outline: none;
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.input-feedback {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    min-height: 1rem;
+}
+
+.input-feedback.error {
+    color: #ef4444;
+}
+
+.input-feedback.success {
+    color: var(--primary-color);
 }
 
 .btn {
     background: var(--primary-color);
     color: white;
     border: none;
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
+    padding: 0.875rem 2rem;
+    border-radius: 12px;
     cursor: pointer;
     font-weight: 600;
     transition: var(--transition);
+    position: relative;
+    overflow: hidden;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.btn:hover:not(:disabled) {
+    background: var(--secondary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(99, 102, 241, 0.3);
+}
+
+.btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    display: none;
+}
+
+.btn.loading .btn-spinner {
+    display: block;
+}
+
+.btn.loading .btn-text {
+    opacity: 0.7;
 }
 
 .btn:hover {
@@ -139,17 +191,28 @@ body {
     display: flex;
     align-items: center;
     margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
 }
 
 .logo i {
-    font-size: 1.5rem;
-    margin-right: 0.5rem;
+    font-size: 2rem;
+    margin-right: 0.75rem;
     color: var(--primary-color);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
 }
 
 .logo h2 {
     color: var(--primary-color);
     font-size: 1.25rem;
+    font-weight: 700;
 }
 
 .nav-links {
@@ -205,24 +268,43 @@ body {
     bottom: 1.5rem;
     left: 1.5rem;
     right: 1.5rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
 }
 
 .user-profile p {
     margin-bottom: 0.75rem;
     opacity: 0.8;
     text-align: center;
+    font-size: 0.9rem;
+}
+
+.user-profile .btn {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
 }
 
 .main-content {
-    margin-left: 250px;
+    margin-left: 280px;
     padding: 2rem;
-    width: calc(100% - 250px);
+    width: calc(100% - 280px);
     flex: 1;
+    min-height: 100vh;
+    background: transparent;
+    animation: slideInRight 0.5s ease;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
 }
 
 .view {
     width: 100%;
-    animation: fadeIn 0.5s ease;
+    animation: fadeInUp 0.6s ease;
     display: none;
 }
 
@@ -230,9 +312,9 @@ body {
     display: block;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
 /* Summary Cards */
@@ -333,7 +415,13 @@ th {
 }
 
 tr:hover {
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(255, 255, 255, 0.08);
+    transform: scale(1.01);
+    transition: var(--transition);
+}
+
+tr:hover td {
+    border-bottom-color: var(--primary-color);
 }
 
 .status-paid {
@@ -346,6 +434,37 @@ tr:hover {
 
 .status-late {
     color: #ef4444;
+}
+
+/* Action Buttons */
+.edit-btn, .delete-btn {
+    padding: 0.25rem 0.5rem;
+    margin: 0 0.25rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: var(--transition);
+}
+
+.edit-btn {
+    background: var(--primary-color);
+    color: white;
+}
+
+.edit-btn:hover {
+    background: var(--secondary-color);
+    transform: scale(1.05);
+}
+
+.delete-btn {
+    background: #ef4444;
+    color: white;
+}
+
+.delete-btn:hover {
+    background: #dc2626;
+    transform: scale(1.05);
 }
 
 /* Form Styles */
@@ -408,26 +527,45 @@ tr:hover {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(5px);
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.3s ease;
 }
 
 .modal-content {
     background: var(--glass-bg);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    margin: 15% auto;
-    padding: 2rem;
+    border-radius: 20px;
+    margin: 10% auto;
+    padding: 2.5rem;
     width: 90%;
-    max-width: 400px;
+    max-width: 450px;
     box-shadow: var(--shadow);
-    animation: modalFadeIn 0.3s ease;
+    animation: modalSlideIn 0.4s ease;
+    position: relative;
 }
 
-@keyframes modalFadeIn {
-    from { opacity: 0; transform: scale(0.9); }
-    to { opacity: 1; transform: scale(1); }
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: scale(0.9) translateY(-20px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.modal-content h2 {
+    margin-bottom: 1rem;
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.modal-content p {
+    margin-bottom: 2rem;
+    text-align: center;
+    opacity: 0.8;
 }
 
 /* Loader Styles */

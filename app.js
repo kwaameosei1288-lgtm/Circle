@@ -17,6 +17,11 @@ const toast = document.getElementById('toast');
 const passwordModal = document.getElementById('password-modal');
 const passwordChangeForm = document.getElementById('password-change-form');
 const loader = document.getElementById('loader');
+const loginBtn = document.getElementById('login-btn');
+const usernameInput = document.getElementById('username');
+const passwordInput = document.getElementById('password');
+const usernameFeedback = document.getElementById('username-feedback');
+const passwordFeedback = document.getElementById('password-feedback');
 
 // Views
 const dashboardView = document.getElementById('dashboard-view');
@@ -48,6 +53,8 @@ function initApp() {
     searchBar.addEventListener('input', renderPayments);
     monthFilter.addEventListener('change', renderPayments);
     passwordChangeForm.addEventListener('submit', handlePasswordChange);
+    usernameInput.addEventListener('input', validateInputs);
+    passwordInput.addEventListener('input', validateInputs);
 
     // Navigation
     dashboardLink.addEventListener('click', (e) => {
@@ -71,9 +78,30 @@ function initApp() {
     renderPayments();
 }
 
-// Show password change modal
-function showPasswordModal() {
-    passwordModal.style.display = 'block';
+// Validate login inputs
+function validateInputs() {
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
+
+    // Clear previous feedback
+    usernameFeedback.textContent = '';
+    usernameFeedback.className = 'input-feedback';
+    passwordFeedback.textContent = '';
+    passwordFeedback.className = 'input-feedback';
+
+    // Enable/disable button
+    loginBtn.disabled = username.length === 0 || password.length === 0;
+
+    // Basic validation
+    if (username.length > 0 && username.length < 3) {
+        usernameFeedback.textContent = 'Username must be at least 3 characters';
+        usernameFeedback.classList.add('error');
+    }
+
+    if (password.length > 0 && password.length < 6) {
+        passwordFeedback.textContent = 'Password must be at least 6 characters';
+        passwordFeedback.classList.add('error');
+    }
 }
 
 // Handle password change
@@ -129,22 +157,32 @@ function showView(view) {
 // Handle login
 function handleLogin(e) {
     e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
-    const user = getUser();
+    const username = usernameInput.value.trim();
+    const password = passwordInput.value.trim();
 
-    if (username === user.username && password === user.password) {
-        user.loggedIn = true;
-        saveUser(user);
-        showToast('Login successful!');
-        if (username !== 'Mavis') {
-            showPasswordModal();
+    // Show loading
+    loginBtn.classList.add('loading');
+    loginBtn.disabled = true;
+
+    // Simulate processing time
+    setTimeout(() => {
+        const user = getUser();
+
+        if (username === user.username && password === user.password) {
+            user.loggedIn = true;
+            saveUser(user);
+            showToast('Login successful!');
+            if (username !== 'Mavis') {
+                showPasswordModal();
+            } else {
+                showDashboard();
+            }
         } else {
-            showDashboard();
+            showToast('Invalid username or password!', true);
+            loginBtn.classList.remove('loading');
+            loginBtn.disabled = false;
         }
-    } else {
-        showToast('Invalid username or password!', true);
-    }
+    }, 1000); // 1 second delay for better UX
 }
 
 // Handle logout
