@@ -101,44 +101,24 @@ function setupPasswordToggle(inputId, toggleId) {
     });
 }
 
-// Notification modal
-function showNotification(title, message, type = 'success') {
-    const modal = document.getElementById('notificationModal');
-    const icon = document.getElementById('notificationIcon');
-    const titleEl = document.getElementById('notificationTitle');
-    const messageEl = document.getElementById('notificationMessage');
-    const btn = document.getElementById('notificationBtn');
+// Show inline message
+function showMessage(message, type = 'success') {
+    const errorElement = document.getElementById('errorMessage');
+    if (!errorElement) return;
     
-    if (!modal || !icon || !titleEl || !messageEl || !btn) {
-        console.error('Notification modal elements not found');
-        alert(title + ': ' + message);
-        return;
+    errorElement.textContent = message;
+    
+    if (type === 'error') {
+        errorElement.style.backgroundColor = '#FEE2E2';
+        errorElement.style.borderLeftColor = '#EF4444';
+        errorElement.style.color = '#991B1B';
+    } else if (type === 'success') {
+        errorElement.style.backgroundColor = '#DCFCE7';
+        errorElement.style.borderLeftColor = '#10B981';
+        errorElement.style.color = '#166534';
     }
     
-    // Update icon
-    icon.className = `notification-icon ${type}`;
-    
-    // Update content
-    titleEl.textContent = title;
-    messageEl.textContent = message;
-    
-    // Update button color
-    btn.className = type === 'error' ? 'btn-danger' : 'btn-primary';
-    
-    // Show modal
-    modal.style.display = 'block';
-    
-    // Close button
-    btn.onclick = () => {
-        modal.style.display = 'none';
-    };
-    
-    // Outside click
-    window.onclick = (e) => {
-        if (e.target === modal) {
-            modal.style.display = 'none';
-        }
-    };
+    errorElement.style.display = 'block';
 }
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -350,13 +330,12 @@ async function handleLogin(e) {
         localStorage.setItem('userRole', profile.role);
         localStorage.setItem('userName', profile.name);
         
-        // Show success notification
-        showNotification('Login Successful', `Welcome, ${profile.name}!`, 'success');
+        // Show success message
+        showMessage(`Welcome, ${profile.name}!`, 'success');
         
         // Check if first login (password not changed)
         if (!profile.password_changed) {
             setTimeout(() => {
-                document.getElementById('notificationModal').style.display = 'none';
                 openModal('passwordModal');
             }, 1500);
         } else {
@@ -369,14 +348,8 @@ async function handleLogin(e) {
         console.error('Login error:', error);
         const errorMsg = error.message || 'Login failed. Please try again.';
         
-        // Show error notification
-        showNotification('Login Failed', errorMsg, 'error');
-        
-        // Also show inline error
-        if (errorElement) {
-            errorElement.textContent = errorMsg;
-            errorElement.style.display = 'block';
-        }
+        // Show error message inline
+        showMessage(errorMsg, 'error');
     } finally {
         // Re-enable submit button
         if (submitBtn) {
@@ -449,9 +422,9 @@ async function handlePasswordChange(e) {
         
         console.log('Password changed successfully');
         
-        // Success
+        // Success - show message and redirect
         closeModal('passwordModal');
-        showNotification('Success', 'Password updated successfully! Redirecting to dashboard...', 'success');
+        showMessage('Password updated successfully! Redirecting to dashboard...', 'success');
         
         // Clear password fields
         document.getElementById('newPassword').value = '';
@@ -460,11 +433,11 @@ async function handlePasswordChange(e) {
         // Redirect to dashboard
         setTimeout(() => {
             window.location.href = 'dashboard.html';
-        }, 2000);
+        }, 1500);
         
     } catch (error) {
         console.error('Password change error:', error);
-        showNotification('Error', error.message || 'Failed to update password', 'error');
+        showMessage(error.message || 'Failed to update password', 'error');
     } finally {
         // Re-enable submit button
         if (submitBtn) {
