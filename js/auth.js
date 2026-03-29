@@ -2,113 +2,18 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // Check if user is already logged in
-    const session = localStorage.getItem('session');
-    if (session) {
-        window.location.href = 'dashboard.html';
-        return;
-    }
-
+    checkExistingSession();
+    
     // Hide bootloader after 2 seconds
     setTimeout(() => {
-        document.getElementById('bootloader').style.display = 'none';
+        const bootloader = document.getElementById('bootloader');
+        if (bootloader) {
+            bootloader.style.display = 'none';
+        }
     }, 2000);
 
     // Login form submission
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-        
-        try {
-            // Map username to email
-            const emailMap = {
-                'kingsley': 'kingsley@helpinghands.com',
-                'mavis': 'mavis@helpinghands.com',
-                'rosemary': 'rosemary@helpinghands.com',
-                'jacob': 'jacob@helpinghands.com',
-                'constance': 'constance@helpinghands.com'
-            };
-            
-            const email = emailMap[username.toLowerCase()];
-            if (!email) {
-                throw new Error('Invalid username');
-            }
-            
-            // Sign in with Supabase
-            const { data, error } = await window.utils.supabase.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
-            
-            if (error) throw error;
-            
-            // Store session
-            localStorage.setItem('session', JSON.stringify(data.session));
-            
-            // Get user profile
-            const { data: profile, error: profileError } = await window.utils.supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', data.user.id)
-                .single();
-            
-            if (profileError) throw profileError;
-            
-            localStorage.setItem('userRole', profile.role);
-            localStorage.setItem('userName', profile.name);
-            
-            // Check if first login (password not changed)
-            if (!profile.password_changed) {
-                openModal('passwordModal');
-            } else {
-                window.location.href = 'dashboard.html';
-            }
-            
-        } catch (error) {
-            document.getElementById('errorMessage').textContent = error.message;
-        }
-    });
-
-    // Password change form
-    document.getElementById('passwordForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const newPassword = document.getElementById('newPassword').value;
-        const confirmPassword = document.getElementById('confirmPassword').value;
-        
-        if (newPassword !== confirmPassword) {
-            alert('Passwords do not match');
-            return;
-        }
-        
-        if (newPassword.length < 8) {
-            alert('Password must be at least 8 characters long');
-            return;
-        }
-        
-        try {
-            const { error } = await window.utils.supabase.auth.updateUser({
-                password: newPassword
-            });
-            
-            if (error) throw error;
-            
-            // Update profile
-            const user = await window.utils.getCurrentUser();
-            await window.utils.supabase
-                .from('profiles')
-                .update({ password_changed: true })
-                .eq('id', user.id);
-            
-            closeModal('passwordModal');
-            window.utils.showToast('Password updated successfully');
-            window.location.href = 'dashboard.html';
-            
-        } catch (error) {
-            alert('Error updating password: ' + error.message);
-        }
-    });
+    document.getElementById('loginForm').addEventListener('submit', handleLogin);
 
     // Modal close
     document.querySelector('.close').addEventListener('click', function() {
@@ -122,3 +27,184 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Check for existing session
+async function checkExistingSession() {
+    try {
+        const { data: { session } } = await window.utils.supabase.auth.getSession();
+        if (session) {
+            // Verify user profile exists
+            const { data: profile } = await window.utils.supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+            
+            if (profile) {
+                localStorage.setItem('session', JSON.stringify(session));
+                localStorage.setItem('userRole', profile.role);
+                localStorage.setItem('userName', profile.name);
+                localStorage.setItem('userId', session.user.id);
+                window.location.href = 'dashboard.html';
+            }
+        }
+    } catch (error) {
+        console.log('No existing session');
+    }
+}
+
+// Handle login
+async function handleLogin(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const errorElement = document.getElementById('errorMessage');
+    
+    // Clear previous error
+    errorElement.textContent = '';
+    
+    try {
+        // Disable submit button and show loading state
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
+        
+        // Map username to email
+        const emailMap = {
+            'kingsley': 'kingsley@helpinghands.com',
+            'mavis': 'mavis@helpinghands.com',
+            'rosemary': 'rosemary@helpinghands.com',
+            'jacob': 'jacob@helpinghands.com',
+            'constance': 'constance@helpinghands.com'
+        };
+        
+        const email = emailMap[username.toLowerCase()];
+        if (!email) {
+            throw new Error('Invalid username. Use: kingsley, mavis, rosemary, jacob, or constance');
+        }
+        
+        // Sign in with Supabase
+        const { data, error } = await window.utils.supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+        
+        if (error) throw error;
+        if (!data.user) throw new Error('Login failed: No user returned');
+        
+        // Store session information
+        localStorage.setItem('session', JSON.stringify(data.session));
+        localStorage.setItem('userId', data.user.id);
+        
+        // Get user profile from database
+        const { data: profile, error: profileError } = await window.utils.supabase
+            .from('profiles')
+            .select('id, name, email, role, password_changed')
+            .eq('id', data.user.id)
+            .single();
+        
+        if (profileError) {
+            throw new Error('Could not fetch user profile. Please contact admin.');
+        }
+        
+        // Store user info locally
+        localStorage.setItem('userRole', profile.role);
+        localStorage.setItem('userName', profile.name);
+        
+        // Check if first login (password not changed)
+        if (!profile.password_changed) {
+            window.utils.showToast('Please change your password on first login', 'info');
+            setTimeout(() => {
+                openModal('passwordModal');
+            }, 500);
+        } else {
+            window.location.href = 'dashboard.html';
+        }
+        
+    } catch (error) {
+        console.error('Login error:', error);
+        errorElement.textContent = error.message || 'Login failed. Please try again.';
+        errorElement.style.display = 'block';
+    } finally {
+        // Re-enable submit button
+        const submitBtn = event.target.querySelector('button[type="submit"]');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
+    }
+}
+
+// Password change handler
+document.addEventListener('DOMContentLoaded', function() {
+    const passwordForm = document.getElementById('passwordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', handlePasswordChange);
+    }
+});
+
+// Handle password change
+async function handlePasswordChange(e) {
+    e.preventDefault();
+    
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    
+    try {
+        // Validation
+        if (!newPassword || !confirmPassword) {
+            throw new Error('Please fill in all fields');
+        }
+        
+        if (newPassword !== confirmPassword) {
+            throw new Error('Passwords do not match');
+        }
+        
+        if (newPassword.length < 8) {
+            throw new Error('Password must be at least 8 characters long');
+        }
+        
+        // Disable submit button
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Updating...';
+        
+        // Update password in Supabase Auth
+        const { error: updateError } = await window.utils.supabase.auth.updateUser({
+            password: newPassword
+        });
+        
+        if (updateError) throw updateError;
+        
+        // Get current user and update profile
+        const { data: { user } } = await window.utils.supabase.auth.getUser();
+        if (!user) throw new Error('Could not identify current user');
+        
+        const { error: profileError } = await window.utils.supabase
+            .from('profiles')
+            .update({ password_changed: true })
+            .eq('id', user.id);
+        
+        if (profileError) throw profileError;
+        
+        // Success
+        closeModal('passwordModal');
+        window.utils.showToast('Password updated successfully!', 'success');
+        
+        // Clear password fields
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1000);
+        
+    } catch (error) {
+        console.error('Password change error:', error);
+        window.utils.showToast(error.message || 'Failed to update password', 'error');
+    } finally {
+        // Re-enable submit button
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Update Password';
+    }
+}
