@@ -1,37 +1,48 @@
 // Authentication Logic
 
 // Wait for utils to be ready
-function waitForUtils() {
-    return new Promise((resolve) => {
-        console.log('Checking for utils...');
+async function waitForUtils() {
+    try {
+        let attempts = 0;
+        const maxAttempts = 100; // 10 seconds at 100ms intervals
         
-        if (window.utils && window.utils.supabase) {
-            console.log('Utils and supabase ready immediately');
-            resolve();
-        } else {
-            let checkCount = 0;
-            const checkInterval = setInterval(() => {
-                checkCount++;
-                console.log(`Attempt ${checkCount}: window.utils =`, !!window.utils, 'supabase =', !!window.utils?.supabase);
-                
-                if (window.utils && window.utils.supabase) {
-                    clearInterval(checkInterval);
-                    console.log('Utils ready after', checkCount, 'attempts');
-                    resolve();
-                }
-            }, 100);
-            
-            // Timeout after 8 seconds
-            setTimeout(() => {
-                clearInterval(checkInterval);
-                console.error('Utils initialization timeout after', checkCount, 'attempts');
-                console.log('window.utils =', window.utils);
-                console.log('window.supabase =', !!window.supabase);
-                console.log('window.config =', window.config);
-                resolve();
-            }, 8000);
+        // First, wait for utils to exist
+        while (!window.utils && attempts < maxAttempts) {
+            console.log(`Attempt ${attempts + 1}: Waiting for window.utils...`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            attempts++;
         }
-    });
+        
+        if (!window.utils) {
+            throw new Error('Utils library failed to load after 10 seconds');
+        }
+        
+        console.log('✓ window.utils available');
+        
+        // Then ensure Supabase is initialized
+        attempts = 0;
+        if (window.utils.ensureInitialized) {
+            console.log('Calling ensureInitialized...');
+            await window.utils.ensureInitialized();
+            console.log('✓ Supabase initialization complete');
+        } else {
+            // Fallback: wait for supabase to be available
+            while (!window.utils?.supabase && attempts < 50) {
+                console.log(`Attempt ${attempts + 1}: Waiting for Supabase...`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            if (!window.utils?.supabase) {
+                throw new Error('Supabase failed to initialize');
+            }
+        }
+        
+        console.log('✓ Utils and Supabase ready');
+        return true;
+    } catch (error) {
+        console.error('Failed to initialize utils:', error);
+        throw error;
+    }
 }
 
 // Password strength meter
@@ -184,8 +195,18 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Check for existing session
 async function checkExistingSession() {
     try {
-        if (!window.utils || !window.utils.supabase) {
+        if (!window.utils) {
             console.log('Utils not ready yet, skipping existing session check');
+            return;
+        }
+        
+        // Ensure Supabase is initialized
+        if (window.utils.ensureInitialized) {
+            await window.utils.ensureInitialized();
+        }
+        
+        if (!window.utils.supabase) {
+            console.log('Supabase not initialized, skipping existing session check');
             return;
         }
         
@@ -221,7 +242,6 @@ async function checkExistingSession() {
     }
 }
 
-// Handle login
 async function handleLogin(e) {
     e.preventDefault();
     
@@ -244,24 +264,21 @@ async function handleLogin(e) {
         
         // Ensure utils is ready
         if (!window.utils) {
-            console.error('window.utils is not defined:', window.utils);
-            console.error('Available globals:', Object.keys(window).filter(k => !k.startsWith('webkit')).slice(0, 20));
+            console.error('window.utils is not defined');
             throw new Error('System loading... Please wait a moment and try again.');
         }
         
-        if (!window.utils.supabase) {
+        // Ensure Supabase is initialized
+        if (window.utils.ensureInitialized) {
+            await window.utils.ensureInitialized();
+        } else if (!window.utils.supabase) {
             console.error('Supabase client not initialized');
-            console.error('window.supabase library:', !!window.supabase);
-            console.error('window.config:', window.config);
-            // Try to initialize it
             if (window.utils.initSupabase) {
                 console.log('Attempting manual initialization...');
-                window.utils.initSupabase();
-                if (!window.utils.supabase) {
-                    throw new Error('Failed to initialize Supabase. Check your configuration.');
-                }
-            } else {
-                throw new Error('Supabase not initialized. Please refresh the page.');
+                await window.utils.initSupabase();
+            }
+            if (!window.utils.supabase) {
+                throw new Error('Failed to initialize Supabase. Check your configuration.');
             }
         }
         
@@ -369,8 +386,15 @@ async function handlePasswordChange(e) {
     
     try {
         // Ensure utils is ready
-        if (!window.utils || !window.utils.supabase) {
+        if (!window.utils) {
             throw new Error('System not initialized. Please refresh the page.');
+        }
+        
+        // Ensure Supabase is initialized
+        if (window.utils.ensureInitialized) {
+            await window.utils.ensureInitialized();
+        } else if (!window.utils.supabase) {
+            throw new Error('Supabase initialization failed. Please refresh the page.');
         }
         
         // Validation
@@ -433,7 +457,7 @@ async function handlePasswordChange(e) {
         // Redirect to dashboard
         setTimeout(() => {
             window.location.href = 'dashboard.html';
-        }, 1500);
+        }, 2000);
         
     } catch (error) {
         console.error('Password change error:', error);
