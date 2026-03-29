@@ -145,7 +145,13 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
         
         // Check if user is already logged in
-        checkExistingSession();
+        const sessionCheckResult = await checkExistingSession();
+        
+        // If user is logged in but hasn't changed password, show the modal
+        if (sessionCheckResult && !sessionCheckResult.passwordChanged) {
+            console.log('User logged in but password not changed, showing modal');
+            openModal('passwordModal');
+        }
         
         // Hide bootloader after 2 seconds
         setTimeout(() => {
@@ -191,13 +197,13 @@ async function checkExistingSession() {
     try {
         if (!window.utils) {
             console.log('Utils not ready yet, skipping existing session check');
-            return;
+            return null;
         }
         
         // Ensure Supabase is initialized by accessing the getter
         if (!window.utils.supabase) {
             console.log('Supabase not initialized, skipping existing session check');
-            return;
+            return null;
         }
         
         console.log('Checking for existing session...');
@@ -215,20 +221,32 @@ async function checkExistingSession() {
             
             if (profileError) {
                 console.log('Profile error:', profileError);
-                return;
+                return null;
             }
             
             if (profile) {
-                console.log('Profile found, redirecting to dashboard');
+                console.log('Profile found:', profile);
                 localStorage.setItem('session', JSON.stringify(session));
                 localStorage.setItem('userRole', profile.role);
                 localStorage.setItem('userName', profile.name);
                 localStorage.setItem('userId', session.user.id);
+                
+                // Check if password has been changed
+                if (!profile.password_changed) {
+                    console.log('First login detected, password change required');
+                    // Return info about needing password change
+                    return { passwordChanged: false, profile };
+                }
+                
+                console.log('Redirecting to dashboard');
                 window.location.href = 'dashboard.html';
+                return { passwordChanged: true, profile };
             }
         }
+        return null;
     } catch (error) {
         console.log('No existing session or error checking session:', error.message);
+        return null;
     }
 }
 
