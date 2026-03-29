@@ -51,6 +51,139 @@
     margin-top: 10px;
 }
 
+/* Password input group with toggle */
+.password-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-group input {
+    flex: 1;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--text-color);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 8px;
+    transition: color 0.3s;
+}
+
+.password-toggle:hover {
+    color: var(--primary-color);
+}
+
+/* Password Strength Meter */
+.password-meter {
+    margin-top: 10px;
+}
+
+.meter-bar {
+    height: 6px;
+    background: #E5E7EB;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.meter-fill {
+    height: 100%;
+    width: 0%;
+    background: #EF4444;
+    transition: width 0.3s, background-color 0.3s;
+    border-radius: 3px;
+}
+
+.meter-fill.weak {
+    width: 25%;
+    background: #EF4444;
+}
+
+.meter-fill.fair {
+    width: 50%;
+    background: #F97316;
+}
+
+.meter-fill.good {
+    width: 75%;
+    background: #FBBF24;
+}
+
+.meter-fill.strong {
+    width: 100%;
+    background: #10B981;
+}
+
+.meter-text {
+    font-size: 12px;
+    color: #6B7280;
+    text-align: right;
+}
+
+#strengthText {
+    font-weight: 600;
+    color: #EF4444;
+}
+
+#strengthText.fair {
+    color: #F97316;
+}
+
+#strengthText.good {
+    color: #FBBF24;
+}
+
+#strengthText.strong {
+    color: #10B981;
+}
+
+/* Notification Modal */
+.modal-notification {
+    text-align: center;
+    min-width: 300px;
+    max-width: 500px;
+}
+
+.notification-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.notification-icon.success::before {
+    content: '✓';
+    color: #10B981;
+}
+
+.notification-icon.error::before {
+    content: '✕';
+    color: #EF4444;
+}
+
+.notification-icon.info::before {
+    content: 'ℹ';
+    color: #3B82F6;
+}
+
+.modal-notification h2 {
+    margin-bottom: 10px;
+    color: var(--text-color);
+}
+
+.modal-notification p {
+    color: #6B7280;
+    margin-bottom: 25px;
+    line-height: 1.5;
+}
+
+#notificationBtn {
+    width: 100%;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     .auth-card {
@@ -63,5 +196,9 @@
     
     .auth-header h1 {
         font-size: 20px;
+    }
+    
+    .modal-notification {
+        min-width: 90%;
     }
 }
