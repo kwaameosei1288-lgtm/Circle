@@ -6,48 +6,173 @@
     <title>Helping Hands Circle - Login</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/auth.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Enhanced Bootloader -->
     <div id="bootloader" class="bootloader">
         <div class="bootloader-content">
-            <div class="spinner"></div>
-            <h2>Loading Helping Hands Circle...</h2>
+            <div class="bootloader-spinner">
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+                <div class="spinner-ring"></div>
+            </div>
+            <div class="bootloader-text">
+                <h2>Loading Helping Hands Circle...</h2>
+                <p>Preparing your experience</p>
+            </div>
         </div>
     </div>
+
+    <!-- Modern Auth Container -->
     <div class="auth-container">
+        <div class="auth-background">
+            <div class="floating-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+                <div class="shape shape-4"></div>
+            </div>
+        </div>
+
         <div class="auth-card">
             <div class="auth-header">
-                <img src="assets/images/logo.svg" alt="Helping Hands Circle Logo" class="logo">
-                <h1>Helping Hands Circle</h1>
-                <p>Stronger Together</p>
+                <div class="logo-container">
+                    <div class="logo-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="logo-pulse"></div>
+                </div>
+                <h1>Welcome Back</h1>
+                <p>Sign in to your Helping Hands Circle account</p>
             </div>
+
             <form id="loginForm" class="auth-form">
                 <div class="form-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" name="username" placeholder="e.g., kingsley" required autocomplete="off" class="form-input">
+                    <label for="username">
+                        <i class="fas fa-user"></i>
+                        Username
+                    </label>
+                    <div class="input-container">
+                        <input type="text" id="username" name="username" placeholder="e.g., kingsley" required autocomplete="off" class="form-input">
+                        <div class="input-icon">
+                            <i class="fas fa-user-circle"></i>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label for="password">Password</label>
-                    <div class="password-wrapper">
+                    <label for="password">
+                        <i class="fas fa-lock"></i>
+                        Password
+                    </label>
+                    <div class="input-container">
                         <input type="password" id="password" name="password" placeholder="Enter your password" required autocomplete="off" class="form-input password-input">
                         <button type="button" class="password-toggle" id="passwordToggle" title="Show/Hide Password" tabindex="-1">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <div class="input-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
                     </div>
                 </div>
-                <button type="submit" class="btn-primary login-btn">Login</button>
-                <div id="errorMessage" class="error-message" style="display: none; margin-top: 15px; padding: 10px; background-color: #FEE2E2; border-radius: 6px; border-left: 4px solid #EF4444; color: #991B1B; font-size: 14px;"></div>
+
+                <button type="submit" class="btn-primary login-btn">
+                    <span class="btn-text">Sign In</span>
+                    <div class="btn-loader" style="display: none;">
+                        <div class="btn-spinner"></div>
+                    </div>
+                    <i class="fas fa-arrow-right btn-icon"></i>
+                </button>
+
+                <div id="errorMessage" class="error-message" style="display: none;">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="error-text"></span>
+                </div>
+
+                <div class="auth-footer">
+                    <p>Need help? <a href="#" class="auth-link">Contact Support</a></p>
+                </div>
             </form>
         </div>
     </div>
 
-    <!-- Password Change Modal -->
+    <!-- Enhanced Password Change Modal -->
     <div id="passwordModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Change Password</h2>
+                <div class="modal-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <h2>Secure Your Account</h2>
+                <p>Please change your password to continue</p>
                 <span class="close">&times;</span>
+            </div>
+
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label for="newPassword">
+                        <i class="fas fa-lock"></i>
+                        New Password
+                    </label>
+                    <div class="input-container">
+                        <input type="password" id="newPassword" name="newPassword" required autocomplete="off" class="form-input password-input">
+                        <button type="button" class="password-toggle" id="newPasswordToggle" title="Show/Hide Password" tabindex="-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <div class="input-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                    </div>
+                    <div class="password-meter">
+                        <div class="meter-bar">
+                            <div class="meter-fill" id="passwordStrength"></div>
+                        </div>
+                        <div class="meter-text">
+                            <span id="strengthText">Very Weak</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="confirmPassword">
+                        <i class="fas fa-lock"></i>
+                        Confirm Password
+                    </label>
+                    <div class="input-container">
+                        <input type="password" id="confirmPassword" name="confirmPassword" required autocomplete="off" class="form-input password-input">
+                        <button type="button" class="password-toggle" id="confirmPasswordToggle" title="Show/Hide Password" tabindex="-1">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <div class="input-icon">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-primary login-btn">
+                    <span class="btn-text">Update Password</span>
+                    <div class="btn-loader" style="display: none;">
+                        <div class="btn-spinner"></div>
+                    </div>
+                    <i class="fas fa-save btn-icon"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Load Supabase first -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Load config and utils -->
+    <script src="lib/config.js"></script>
+    <script src="lib/utils.js"></script>
+
+    <!-- Load auth script -->
+    <script src="js/auth.js"></script>
+</body>
+</html>
             </div>
             <form id="passwordForm">
                 <div class="form-group">

@@ -1,41 +1,105 @@
-// Authentication Logic - Simplified and Rebuilt
+// Authentication Logic - Enhanced and Fixed
+
+// Global initialization flag
+let isInitialized = false;
 
 // Wait for all dependencies to be ready
 async function initializeAuth() {
+    if (isInitialized) return;
+    isInitialized = true;
+
     try {
-        console.log('Initializing authentication...');
+        console.log('🚀 Initializing authentication system...');
 
-        // Wait for utils and Supabase
-        let attempts = 0;
-        while ((!window.utils || !window.utils.supabase) && attempts < 100) {
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
+        // Wait for critical dependencies with timeout
+        const depsReady = await waitForDependencies();
+        if (!depsReady) {
+            throw new Error('Dependencies failed to load within timeout');
         }
 
-        if (!window.utils || !window.utils.supabase) {
-            throw new Error('Failed to load dependencies');
-        }
-
-        console.log('✓ Dependencies loaded');
+        console.log('✅ Dependencies loaded successfully');
 
         // Check for existing session
         await checkExistingSession();
 
-        // Setup event listeners
+        // Setup all event listeners
         setupEventListeners();
 
-        // Hide bootloader after a short delay
+        // Hide bootloader with animation
         setTimeout(() => {
             const bootloader = document.getElementById('bootloader');
             if (bootloader) {
-                bootloader.style.display = 'none';
+                bootloader.style.transition = 'opacity 0.5s ease-out';
+                bootloader.style.opacity = '0';
+                setTimeout(() => {
+                    bootloader.style.display = 'none';
+                }, 500);
             }
-        }, 1500);
+        }, 1000);
+
+        console.log('🎉 Authentication system ready');
 
     } catch (error) {
-        console.error('Auth initialization failed:', error);
-        showError('System initialization failed. Please refresh the page.');
+        console.error('❌ Auth initialization failed:', error);
+        showError(error.message || 'System initialization failed. Please refresh the page.');
+
+        // Show the page even if initialization fails
+        const bootloader = document.getElementById('bootloader');
+        if (bootloader) {
+            bootloader.style.display = 'none';
+        }
     }
+}
+
+// Wait for dependencies with better error handling
+async function waitForDependencies() {
+    const maxAttempts = 50; // 5 seconds
+    let attempts = 0;
+
+    while (attempts < maxAttempts) {
+        attempts++;
+
+        // Check if Supabase library is loaded
+        if (typeof window.supabase === 'undefined') {
+            console.log(`⏳ Waiting for Supabase library... (${attempts}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+        }
+
+        // Check if config is loaded
+        if (!window.config) {
+            console.log(`⏳ Waiting for config... (${attempts}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+        }
+
+        // Check if utils is loaded and initialized
+        if (!window.utils) {
+            console.log(`⏳ Waiting for utils... (${attempts}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+        }
+
+        // Try to access supabase getter to ensure it's initialized
+        try {
+            const supabase = window.utils.supabase;
+            if (!supabase) {
+                console.log(`⏳ Waiting for Supabase client... (${attempts}/${maxAttempts})`);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                continue;
+            }
+        } catch (error) {
+            console.log(`⏳ Waiting for Supabase initialization... (${attempts}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 100));
+            continue;
+        }
+
+        console.log('✅ All dependencies ready');
+        return true;
+    }
+
+    console.error('❌ Dependencies failed to load within timeout');
+    return false;
 }
 
 // Check if user is already logged in
@@ -77,19 +141,27 @@ async function checkExistingSession() {
 
 // Setup all event listeners
 function setupEventListeners() {
+    console.log('Setting up event listeners...');
+
     // Login form
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
+        console.log('✅ Login form listener attached');
+    } else {
+        console.warn('❌ Login form not found');
     }
 
     // Password form
     const passwordForm = document.getElementById('passwordForm');
     if (passwordForm) {
         passwordForm.addEventListener('submit', handlePasswordChange);
+        console.log('✅ Password form listener attached');
+    } else {
+        console.warn('❌ Password form not found');
     }
 
-    // Password toggles
+    // Password toggles - setup with error handling
     setupPasswordToggle('password', 'passwordToggle');
     setupPasswordToggle('newPassword', 'newPasswordToggle');
     setupPasswordToggle('confirmPassword', 'confirmPasswordToggle');
@@ -98,20 +170,24 @@ function setupEventListeners() {
     const newPasswordInput = document.getElementById('newPassword');
     if (newPasswordInput) {
         newPasswordInput.addEventListener('input', updatePasswordStrength);
+        console.log('✅ Password strength listener attached');
     }
 
-    // Modal close
+    // Modal close buttons
     const closeBtn = document.querySelector('.close');
     if (closeBtn) {
         closeBtn.addEventListener('click', () => closePasswordModal());
+        console.log('✅ Modal close listener attached');
     }
 
     window.addEventListener('click', (event) => {
         const modal = document.getElementById('passwordModal');
-        if (event.target === modal) {
+        if (modal && event.target === modal) {
             closePasswordModal();
         }
     });
+
+    console.log('✅ All event listeners setup complete');
 }
 
 // Handle login form submission
@@ -131,9 +207,15 @@ async function handleLogin(event) {
             throw new Error('Please enter both username and password');
         }
 
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Logging in...';
+    // Show loading state
+    submitBtn.disabled = true;
+    const btnText = submitBtn.querySelector('.btn-text');
+    const btnLoader = submitBtn.querySelector('.btn-loader');
+    const btnIcon = submitBtn.querySelector('.btn-icon');
+
+    if (btnText) btnText.textContent = 'Signing in...';
+    if (btnLoader) btnLoader.style.display = 'block';
+    if (btnIcon) btnIcon.style.display = 'none';
 
         // Map username to email
         const emailMap = {
@@ -202,7 +284,13 @@ async function handleLogin(event) {
     } finally {
         // Reset button
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Login';
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoader = submitBtn.querySelector('.btn-loader');
+        const btnIcon = submitBtn.querySelector('.btn-icon');
+
+        if (btnText) btnText.textContent = 'Sign In';
+        if (btnLoader) btnLoader.style.display = 'none';
+        if (btnIcon) btnIcon.style.display = 'inline-block';
     }
 }
 
@@ -230,7 +318,13 @@ async function handlePasswordChange(event) {
 
         // Show loading
         submitBtn.disabled = true;
-        submitBtn.textContent = 'Updating...';
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoader = submitBtn.querySelector('.btn-loader');
+        const btnIcon = submitBtn.querySelector('.btn-icon');
+
+        if (btnText) btnText.textContent = 'Updating...';
+        if (btnLoader) btnLoader.style.display = 'block';
+        if (btnIcon) btnIcon.style.display = 'none';
 
         console.log('Updating password...');
 
@@ -268,26 +362,55 @@ async function handlePasswordChange(event) {
         console.error('Password change error:', error);
         showError(error.message || 'Failed to update password');
     } finally {
+        // Reset button
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Update Password';
+        const btnText = submitBtn.querySelector('.btn-text');
+        const btnLoader = submitBtn.querySelector('.btn-loader');
+        const btnIcon = submitBtn.querySelector('.btn-icon');
+
+        if (btnText) btnText.textContent = 'Update Password';
+        if (btnLoader) btnLoader.style.display = 'none';
+        if (btnIcon) btnIcon.style.display = 'inline-block';
     }
 }
 
-// Password toggle functionality
+// Enhanced password toggle functionality
 function setupPasswordToggle(inputId, toggleId) {
     const input = document.getElementById(inputId);
     const toggle = document.getElementById(toggleId);
 
-    if (!input || !toggle) return;
+    if (!input || !toggle) {
+        console.warn(`Password toggle setup failed: input=${inputId}, toggle=${toggleId}`);
+        return;
+    }
 
-    toggle.addEventListener('click', (e) => {
+    // Remove any existing listeners to prevent duplicates
+    const newToggle = toggle.cloneNode(true);
+    toggle.parentNode.replaceChild(newToggle, toggle);
+
+    // Add the event listener to the new element
+    newToggle.addEventListener('click', function(e) {
         e.preventDefault();
-        const type = input.type === 'password' ? 'text' : 'password';
-        input.type = type;
-        toggle.innerHTML = type === 'password'
+        e.stopPropagation();
+
+        const currentType = input.type;
+        const newType = currentType === 'password' ? 'text' : 'password';
+
+        input.type = newType;
+        newToggle.innerHTML = newType === 'password'
             ? '<i class="fas fa-eye"></i>'
             : '<i class="fas fa-eye-slash"></i>';
+
+        // Add visual feedback
+        newToggle.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            newToggle.style.transform = '';
+        }, 150);
+
+        console.log(`Password visibility toggled for ${inputId}: ${newType}`);
     });
+
+    console.log(`✅ Password toggle setup complete for ${inputId}`);
 }
 
 // Password strength meter
@@ -348,33 +471,56 @@ function closePasswordModal() {
     }
 }
 
-// Message functions
+// Enhanced error message display
 function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     if (errorDiv) {
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-        errorDiv.style.backgroundColor = '#FEE2E2';
-        errorDiv.style.borderLeftColor = '#EF4444';
-        errorDiv.style.color = '#991B1B';
+        const errorText = errorDiv.querySelector('.error-text');
+        if (errorText) {
+            errorText.textContent = message;
+        } else {
+            errorDiv.textContent = message;
+        }
+        errorDiv.style.display = 'flex';
+        errorDiv.style.animation = 'slideInFromTop 0.4s ease-out';
+
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            hideError();
+        }, 5000);
     }
 }
 
+// Enhanced success message display
 function showSuccess(message) {
     const errorDiv = document.getElementById('errorMessage');
     if (errorDiv) {
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-        errorDiv.style.backgroundColor = '#DCFCE7';
-        errorDiv.style.borderLeftColor = '#10B981';
-        errorDiv.style.color = '#166534';
+        const errorText = errorDiv.querySelector('.error-text');
+        if (errorText) {
+            errorText.textContent = message;
+        } else {
+            errorDiv.textContent = message;
+        }
+        errorDiv.style.display = 'flex';
+        errorDiv.style.background = 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)';
+        errorDiv.style.borderLeftColor = '#4facfe';
+        errorDiv.style.color = 'white';
+        errorDiv.style.animation = 'slideInFromTop 0.4s ease-out';
+
+        // Auto-hide after 3 seconds for success
+        setTimeout(() => {
+            hideError();
+        }, 3000);
     }
 }
 
 function hideError() {
     const errorDiv = document.getElementById('errorMessage');
     if (errorDiv) {
-        errorDiv.style.display = 'none';
+        errorDiv.style.animation = 'slideOutToTop 0.3s ease-in';
+        setTimeout(() => {
+            errorDiv.style.display = 'none';
+        }, 300);
     }
 }
 
