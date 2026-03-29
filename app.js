@@ -1,8 +1,10 @@
 // app.js
 
 // DOM Elements
-const loginPage = document.getElementById('login-page');
 const dashboard = document.getElementById('dashboard');
+const loginModal = document.getElementById('login-modal');
+const passwordModal = document.getElementById('password-modal');
+const changePasswordPrompt = document.getElementById('change-password-prompt');
 const loginForm = document.getElementById('login-form');
 const paymentForm = document.getElementById('payment-form');
 const paymentsTableBody = document.getElementById('payments-body');
@@ -13,8 +15,8 @@ const generateReportBtn = document.getElementById('generate-report-btn');
 const exportPdfBtn = document.getElementById('export-pdf-btn');
 const saveSettingsBtn = document.getElementById('save-settings-btn');
 const logoutBtn = document.getElementById('logout-btn');
+const changePasswordBtn = document.getElementById('change-password-btn');
 const toast = document.getElementById('toast');
-const passwordModal = document.getElementById('password-modal');
 const passwordChangeForm = document.getElementById('password-change-form');
 const loader = document.getElementById('loader');
 const loginBtn = document.getElementById('login-btn');
@@ -39,8 +41,12 @@ const settingsLink = document.getElementById('settings-link');
 function initApp() {
     // Check if user is logged in
     const user = getUser();
-    if (user && user.loggedIn) {
+    if (user && user.loggedIn && user.passwordChanged) {
         showDashboard();
+    } else if (user && user.loggedIn) {
+        showChangePasswordPrompt();
+    } else {
+        showLoginModal();
     }
 
     // Event Listeners
@@ -53,6 +59,10 @@ function initApp() {
     searchBar.addEventListener('input', renderPayments);
     monthFilter.addEventListener('change', renderPayments);
     passwordChangeForm.addEventListener('submit', handlePasswordChange);
+    changePasswordBtn.addEventListener('click', () => {
+        changePasswordPrompt.style.display = 'none';
+        passwordModal.style.display = 'block';
+    });
     usernameInput.addEventListener('input', validateInputs);
     passwordInput.addEventListener('input', validateInputs);
 
@@ -122,7 +132,7 @@ function handlePasswordChange(e) {
 
     const user = getUser();
     user.password = newPassword;
-    user.forcePasswordChange = false;
+    user.passwordChanged = true;
     saveUser(user);
     showToast('Password changed successfully!');
     passwordModal.style.display = 'none';
@@ -172,11 +182,8 @@ function handleLogin(e) {
             user.loggedIn = true;
             saveUser(user);
             showToast('Login successful!');
-            if (username !== 'Mavis') {
-                showPasswordModal();
-            } else {
-                showDashboard();
-            }
+            loginModal.style.display = 'none';
+            showChangePasswordPrompt();
         } else {
             showToast('Invalid username or password!', true);
             loginBtn.classList.remove('loading');
@@ -189,10 +196,11 @@ function handleLogin(e) {
 function handleLogout() {
     const user = getUser();
     user.loggedIn = false;
+    user.passwordChanged = false;
     saveUser(user);
     showToast('Logged out successfully.');
-    loginPage.style.display = 'flex';
     dashboard.style.display = 'none';
+    showLoginModal();
 }
 
 // Handle adding a payment

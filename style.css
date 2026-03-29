@@ -518,54 +518,23 @@ tr:hover td {
     padding: 0.5rem 1rem;
 }
 
-/* Modal Styles */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 2000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(8px);
-    animation: fadeIn 0.3s ease;
-}
-
-.modal-content {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    margin: 10% auto;
-    padding: 2.5rem;
-    width: 90%;
+/* Login Modal Content */
+.login-modal-content {
+    text-align: center;
     max-width: 450px;
-    box-shadow: var(--shadow);
-    animation: modalSlideIn 0.4s ease;
-    position: relative;
+    width: 100%;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes modalSlideIn {
-    from { opacity: 0; transform: scale(0.9) translateY(-20px); }
-    to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.modal-content h2 {
+.login-modal-content h1 {
     margin-bottom: 1rem;
     color: var(--primary-color);
-    text-align: center;
+    font-size: 2rem;
 }
 
-.modal-content p {
+.login-modal-content p {
     margin-bottom: 2rem;
-    text-align: center;
     opacity: 0.8;
+    font-size: 1.1rem;
 }
 
 /* Loader Styles */

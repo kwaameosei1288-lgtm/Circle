@@ -11,32 +11,8 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- Login Page -->
-    <div id="login-page" class="login-container">
-        <div class="login-card">
-            <h1>Helping Hands Circle</h1>
-            <p>Treasurer Management System</p>
-            <form id="login-form">
-                <div class="input-group">
-                    <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Enter username" required>
-                    <div class="input-feedback" id="username-feedback"></div>
-                </div>
-                <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter password" required>
-                    <div class="input-feedback" id="password-feedback"></div>
-                </div>
-                <button type="submit" class="btn" id="login-btn">
-                    <span class="btn-text">Login</span>
-                    <div class="btn-spinner" id="login-spinner"></div>
-                </button>
-            </form>
-        </div>
-    </div>
-
     <!-- Main Dashboard -->
-    <div id="dashboard" class="dashboard-container" style="display: none;">
+    <div id="dashboard" class="dashboard-container">
         <!-- Sidebar -->
         <div class="sidebar">
             <div class="logo">
@@ -212,14 +188,35 @@
         </div>
     </div>
 
-    <!-- Toast Notifications -->
-    <div id="toast" class="toast"></div>
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content login-modal-content">
+            <h1>Helping Hands Circle</h1>
+            <p>Treasurer Management System</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter username" required>
+                    <div class="input-feedback" id="username-feedback"></div>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter password" required>
+                    <div class="input-feedback" id="password-feedback"></div>
+                </div>
+                <button type="submit" class="btn" id="login-btn">
+                    <span class="btn-text">Login</span>
+                    <div class="btn-spinner" id="login-spinner"></div>
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Password Change Modal -->
     <div id="password-modal" class="modal">
         <div class="modal-content">
             <h2>Change Password</h2>
-            <p>For security reasons, please change your password.</p>
+            <p>For security reasons, please change your password to continue.</p>
             <form id="password-change-form">
                 <div class="form-group">
                     <label for="new-password">New Password</label>
@@ -233,6 +230,18 @@
             </form>
         </div>
     </div>
+
+    <!-- Change Password Button (appears after login) -->
+    <div id="change-password-prompt" class="change-password-prompt">
+        <div class="prompt-content">
+            <h3>Security Update Required</h3>
+            <p>Please change your password to secure your account.</p>
+            <button id="change-password-btn" class="btn">Change Password</button>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast" class="toast"></div>
 
     <!-- Loader -->
     <div id="loader" class="loader">

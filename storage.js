@@ -10,7 +10,7 @@ function initializeStorage() {
             username: 'Mavis',
             password: 'Password123',
             loggedIn: false,
-            forcePasswordChange: true
+            passwordChanged: false
         };
         localStorage.setItem('user', JSON.stringify(defaultUser));
     }
