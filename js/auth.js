@@ -1,72 +1,316 @@
-// Authentication Logic
+// Authentication Logic - Simplified and Rebuilt
 
-// Wait for utils to be ready
-async function waitForUtils() {
+// Wait for all dependencies to be ready
+async function initializeAuth() {
     try {
+        console.log('Initializing authentication...');
+
+        // Wait for utils and Supabase
         let attempts = 0;
-        const maxAttempts = 100; // 10 seconds at 100ms intervals
-        
-        // First, wait for utils to exist
-        while (!window.utils && attempts < maxAttempts) {
-            console.log(`Attempt ${attempts + 1}: Waiting for window.utils...`);
+        while ((!window.utils || !window.utils.supabase) && attempts < 100) {
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
-        
-        if (!window.utils) {
-            throw new Error('Utils library failed to load after 10 seconds');
+
+        if (!window.utils || !window.utils.supabase) {
+            throw new Error('Failed to load dependencies');
         }
-        
-        console.log('✓ window.utils available');
-        
-        // Then ensure Supabase is initialized by accessing the getter
-        attempts = 0;
-        while (!window.utils.supabase && attempts < 50) {
-            console.log(`Attempt ${attempts + 1}: Waiting for Supabase...`);
-            await new Promise(resolve => setTimeout(resolve, 100));
-            attempts++;
-        }
-        
-        if (!window.utils.supabase) {
-            throw new Error('Supabase failed to initialize after 5 seconds');
-        }
-        
-        console.log('✓ Utils and Supabase ready');
-        return true;
+
+        console.log('✓ Dependencies loaded');
+
+        // Check for existing session
+        await checkExistingSession();
+
+        // Setup event listeners
+        setupEventListeners();
+
+        // Hide bootloader after a short delay
+        setTimeout(() => {
+            const bootloader = document.getElementById('bootloader');
+            if (bootloader) {
+                bootloader.style.display = 'none';
+            }
+        }, 1500);
+
     } catch (error) {
-        console.error('Failed to initialize utils:', error);
-        throw error;
+        console.error('Auth initialization failed:', error);
+        showError('System initialization failed. Please refresh the page.');
     }
 }
 
+// Check if user is already logged in
+async function checkExistingSession() {
+    try {
+        const { data: { session } } = await window.utils.supabase.auth.getSession();
+
+        if (session) {
+            console.log('Existing session found');
+
+            // Verify profile exists
+            const { data: profile } = await window.utils.supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .single();
+
+            if (profile) {
+                // Store session data
+                localStorage.setItem('session', JSON.stringify(session));
+                localStorage.setItem('userId', session.user.id);
+                localStorage.setItem('userRole', profile.role);
+                localStorage.setItem('userName', profile.name);
+
+                // Check if password change is needed
+                if (!profile.password_changed) {
+                    console.log('Password change required');
+                    showPasswordModal();
+                } else {
+                    console.log('Redirecting to dashboard');
+                    window.location.href = 'dashboard.html';
+                }
+            }
+        }
+    } catch (error) {
+        console.log('No valid session found:', error.message);
+    }
+}
+
+// Setup all event listeners
+function setupEventListeners() {
+    // Login form
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', handleLogin);
+    }
+
+    // Password form
+    const passwordForm = document.getElementById('passwordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', handlePasswordChange);
+    }
+
+    // Password toggles
+    setupPasswordToggle('password', 'passwordToggle');
+    setupPasswordToggle('newPassword', 'newPasswordToggle');
+    setupPasswordToggle('confirmPassword', 'confirmPasswordToggle');
+
+    // Password strength meter
+    const newPasswordInput = document.getElementById('newPassword');
+    if (newPasswordInput) {
+        newPasswordInput.addEventListener('input', updatePasswordStrength);
+    }
+
+    // Modal close
+    const closeBtn = document.querySelector('.close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => closePasswordModal());
+    }
+
+    window.addEventListener('click', (event) => {
+        const modal = document.getElementById('passwordModal');
+        if (event.target === modal) {
+            closePasswordModal();
+        }
+    });
+}
+
+// Handle login form submission
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+
+    // Clear previous errors
+    hideError();
+
+    try {
+        // Validate inputs
+        if (!username || !password) {
+            throw new Error('Please enter both username and password');
+        }
+
+        // Show loading state
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Logging in...';
+
+        // Map username to email
+        const emailMap = {
+            'kingsley': 'kingsley@helpinghands.com',
+            'mavis': 'mavis@helpinghands.com',
+            'rosemary': 'rosemary@helpinghands.com',
+            'jacob': 'jacob@helpinghands.com',
+            'constance': 'constance@helpinghands.com'
+        };
+
+        const email = emailMap[username.toLowerCase()];
+        if (!email) {
+            throw new Error('Invalid username');
+        }
+
+        console.log('Attempting login for:', username);
+
+        // Attempt login
+        const { data, error } = await window.utils.supabase.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data.user || !data.session) {
+            throw new Error('Login failed');
+        }
+
+        console.log('Login successful');
+
+        // Store session data
+        localStorage.setItem('session', JSON.stringify(data.session));
+        localStorage.setItem('userId', data.user.id);
+
+        // Fetch user profile
+        const { data: profile, error: profileError } = await window.utils.supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', data.user.id)
+            .single();
+
+        if (profileError || !profile) {
+            throw new Error('Failed to load user profile');
+        }
+
+        // Store profile data
+        localStorage.setItem('userRole', profile.role);
+        localStorage.setItem('userName', profile.name);
+
+        // Check if password change is needed
+        if (!profile.password_changed) {
+            showPasswordModal();
+        } else {
+            showSuccess('Login successful! Redirecting...');
+            setTimeout(() => {
+                window.location.href = 'dashboard.html';
+            }, 1500);
+        }
+
+    } catch (error) {
+        console.error('Login error:', error);
+        showError(error.message || 'Login failed');
+    } finally {
+        // Reset button
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Login';
+    }
+}
+
+// Handle password change
+async function handlePasswordChange(event) {
+    event.preventDefault();
+
+    const newPassword = document.getElementById('newPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+
+    try {
+        // Validate
+        if (!newPassword || !confirmPassword) {
+            throw new Error('Please fill all fields');
+        }
+
+        if (newPassword !== confirmPassword) {
+            throw new Error('Passwords do not match');
+        }
+
+        if (newPassword.length < 8) {
+            throw new Error('Password must be at least 8 characters');
+        }
+
+        // Show loading
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Updating...';
+
+        console.log('Updating password...');
+
+        // Update password
+        const { error: updateError } = await window.utils.supabase.auth.updateUser({
+            password: newPassword
+        });
+
+        if (updateError) {
+            throw updateError;
+        }
+
+        // Update profile
+        const userId = localStorage.getItem('userId');
+        const { error: profileError } = await window.utils.supabase
+            .from('profiles')
+            .update({ password_changed: true })
+            .eq('id', userId);
+
+        if (profileError) {
+            throw profileError;
+        }
+
+        console.log('Password updated successfully');
+
+        // Success
+        closePasswordModal();
+        showSuccess('Password updated! Redirecting to dashboard...');
+
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 2000);
+
+    } catch (error) {
+        console.error('Password change error:', error);
+        showError(error.message || 'Failed to update password');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Update Password';
+    }
+}
+
+// Password toggle functionality
+function setupPasswordToggle(inputId, toggleId) {
+    const input = document.getElementById(inputId);
+    const toggle = document.getElementById(toggleId);
+
+    if (!input || !toggle) return;
+
+    toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        const type = input.type === 'password' ? 'text' : 'password';
+        input.type = type;
+        toggle.innerHTML = type === 'password'
+            ? '<i class="fas fa-eye"></i>'
+            : '<i class="fas fa-eye-slash"></i>';
+    });
+}
+
 // Password strength meter
-function calculatePasswordStrength(password) {
+function updatePasswordStrength() {
+    const input = document.getElementById('newPassword');
+    const strengthBar = document.getElementById('passwordStrength');
+    const strengthText = document.getElementById('strengthText');
+
+    if (!input) return;
+
+    const password = input.value;
     let strength = 0;
+
     if (password.length >= 8) strength++;
     if (password.length >= 12) strength++;
     if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
     if (/\d/.test(password)) strength++;
     if (/[^a-zA-Z\d]/.test(password)) strength++;
-    
-    return strength;
-}
 
-function updatePasswordStrength(inputId, strengthId, textId) {
-    const input = document.getElementById(inputId);
-    if (!input) return;
-    
-    const password = input.value;
-    const strengthBar = document.getElementById(strengthId);
-    const strengthText = document.getElementById(textId);
-    
-    const strength = calculatePasswordStrength(password);
     let level = 'Very Weak';
     let className = '';
-    
-    if (strength === 0) {
-        className = '';
-        level = 'Very Weak';
-    } else if (strength === 1) {
+
+    if (strength <= 1) {
         className = 'weak';
         level = 'Weak';
     } else if (strength === 2 || strength === 3) {
@@ -79,7 +323,7 @@ function updatePasswordStrength(inputId, strengthId, textId) {
         className = 'strong';
         level = 'Strong';
     }
-    
+
     if (strengthBar) {
         strengthBar.className = `meter-fill ${className}`;
     }
@@ -89,388 +333,50 @@ function updatePasswordStrength(inputId, strengthId, textId) {
     }
 }
 
-// Password toggle functionality
-function setupPasswordToggle(inputId, toggleId) {
-    const input = document.getElementById(inputId);
-    const toggle = document.getElementById(toggleId);
-    
-    if (!input || !toggle) return;
-    
-    toggle.addEventListener('click', (e) => {
-        e.preventDefault();
-        const type = input.type === 'password' ? 'text' : 'password';
-        input.type = type;
-        toggle.innerHTML = type === 'password' 
-            ? '<i class="fas fa-eye"></i>' 
-            : '<i class="fas fa-eye-slash"></i>';
-    });
-}
-
-// Show inline message
-function showMessage(message, type = 'success') {
-    const errorElement = document.getElementById('errorMessage');
-    if (!errorElement) return;
-    
-    errorElement.textContent = message;
-    
-    if (type === 'error') {
-        errorElement.style.backgroundColor = '#FEE2E2';
-        errorElement.style.borderLeftColor = '#EF4444';
-        errorElement.style.color = '#991B1B';
-    } else if (type === 'success') {
-        errorElement.style.backgroundColor = '#DCFCE7';
-        errorElement.style.borderLeftColor = '#10B981';
-        errorElement.style.color = '#166534';
-    }
-    
-    errorElement.style.display = 'block';
-}
-
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        // Ensure utils is initialized
-        await waitForUtils();
-        
-        // Setup password toggles
-        setupPasswordToggle('password', 'passwordToggle');
-        setupPasswordToggle('newPassword', 'newPasswordToggle');
-        setupPasswordToggle('confirmPassword', 'confirmPasswordToggle');
-        
-        // Password strength meter listener
-        const newPasswordInput = document.getElementById('newPassword');
-        if (newPasswordInput) {
-            newPasswordInput.addEventListener('input', () => {
-                updatePasswordStrength('newPassword', 'passwordStrength', 'strengthText');
-            });
-        }
-        
-        // Check if user is already logged in
-        const sessionCheckResult = await checkExistingSession();
-        
-        // If user is logged in but hasn't changed password, show the modal
-        if (sessionCheckResult && !sessionCheckResult.passwordChanged) {
-            console.log('User logged in but password not changed, showing modal');
-            openModal('passwordModal');
-        }
-        
-        // Hide bootloader after 2 seconds
-        setTimeout(() => {
-            const bootloader = document.getElementById('bootloader');
-            if (bootloader) {
-                bootloader.style.display = 'none';
-            }
-        }, 2000);
-
-        // Login form submission
-        const loginForm = document.getElementById('loginForm');
-        if (loginForm) {
-            loginForm.addEventListener('submit', handleLogin);
-        }
-        
-        // Password form submission
-        const passwordForm = document.getElementById('passwordForm');
-        if (passwordForm) {
-            passwordForm.addEventListener('submit', handlePasswordChange);
-        }
-
-        // Modal close
-        const closeBtn = document.querySelector('.close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', function() {
-                closeModal('passwordModal');
-            });
-        }
-        
-        window.addEventListener('click', function(event) {
-            const modal = document.getElementById('passwordModal');
-            if (event.target === modal) {
-                closeModal('passwordModal');
-            }
-        });
-    } catch (error) {
-        console.error('DOMContentLoaded error:', error);
-    }
-});
-
-// Check for existing session
-async function checkExistingSession() {
-    try {
-        if (!window.utils) {
-            console.log('Utils not ready yet, skipping existing session check');
-            return null;
-        }
-        
-        // Ensure Supabase is initialized by accessing the getter
-        if (!window.utils.supabase) {
-            console.log('Supabase not initialized, skipping existing session check');
-            return null;
-        }
-        
-        console.log('Checking for existing session...');
-        
-        const { data: { session } } = await window.utils.supabase.auth.getSession();
-        if (session) {
-            console.log('Existing session found, fetching profile...');
-            
-            // Verify user profile exists
-            const { data: profile, error: profileError } = await window.utils.supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-            
-            if (profileError) {
-                console.log('Profile error:', profileError);
-                return null;
-            }
-            
-            if (profile) {
-                console.log('Profile found:', profile);
-                localStorage.setItem('session', JSON.stringify(session));
-                localStorage.setItem('userRole', profile.role);
-                localStorage.setItem('userName', profile.name);
-                localStorage.setItem('userId', session.user.id);
-                
-                // Check if password has been changed
-                if (!profile.password_changed) {
-                    console.log('First login detected, password change required');
-                    // Return info about needing password change
-                    return { passwordChanged: false, profile };
-                }
-                
-                console.log('Redirecting to dashboard');
-                window.location.href = 'dashboard.html';
-                return { passwordChanged: true, profile };
-            }
-        }
-        return null;
-    } catch (error) {
-        console.log('No existing session or error checking session:', error.message);
-        return null;
+// Modal functions
+function showPasswordModal() {
+    const modal = document.getElementById('passwordModal');
+    if (modal) {
+        modal.style.display = 'block';
     }
 }
 
-async function handleLogin(e) {
-    e.preventDefault();
-    
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    const errorElement = document.getElementById('errorMessage');
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    
-    // Clear previous error
-    if (errorElement) {
-        errorElement.textContent = '';
-        errorElement.style.display = 'none';
-    }
-    
-    try {
-        // Validate inputs
-        if (!username || !password) {
-            throw new Error('Please enter username and password');
-        }
-        
-        // Ensure utils is ready
-        if (!window.utils) {
-            console.error('window.utils is not defined');
-            throw new Error('System loading... Please wait a moment and try again.');
-        }
-        
-        // Ensure Supabase is initialized by accessing the getter
-        if (!window.utils.supabase) {
-            console.error('Supabase client not initialized');
-            throw new Error('System loading... Please wait a moment and try again.');
-        }
-        
-        // Disable submit button and show loading state
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Logging in...';
-        }
-        
-        console.log('Attempting login with username:', username);
-        
-        // Map username to email
-        const emailMap = {
-            'kingsley': 'kingsley@helpinghands.com',
-            'mavis': 'mavis@helpinghands.com',
-            'rosemary': 'rosemary@helpinghands.com',
-            'jacob': 'jacob@helpinghands.com',
-            'constance': 'constance@helpinghands.com'
-        };
-        
-        const email = emailMap[username.toLowerCase()];
-        if (!email) {
-            throw new Error('Invalid username. Use: kingsley, mavis, rosemary, jacob, or constance');
-        }
-        
-        console.log('Mapped to email:', email);
-        
-        // Sign in with Supabase
-        const { data, error } = await window.utils.supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-        
-        if (error) {
-            console.error('Supabase auth error:', error);
-            throw error;
-        }
-        
-        if (!data.user) {
-            throw new Error('Login failed: No user returned');
-        }
-        
-        console.log('Auth successful, user:', data.user.id);
-        
-        // Store session information
-        localStorage.setItem('session', JSON.stringify(data.session));
-        localStorage.setItem('userId', data.user.id);
-        
-        // Get user profile from database
-        console.log('Fetching profile for user:', data.user.id);
-        
-        const { data: profile, error: profileError } = await window.utils.supabase
-            .from('profiles')
-            .select('id, name, email, role, password_changed')
-            .eq('id', data.user.id)
-            .single();
-        
-        if (profileError) {
-            console.error('Profile fetch error:', profileError);
-            throw new Error('Could not fetch user profile. Please contact admin.');
-        }
-        
-        console.log('Profile fetched:', profile);
-        
-        // Store user info locally
-        localStorage.setItem('userRole', profile.role);
-        localStorage.setItem('userName', profile.name);
-        
-        // Show success message
-        showMessage(`Welcome, ${profile.name}!`, 'success');
-        
-        // Check if first login (password not changed)
-        if (!profile.password_changed) {
-            setTimeout(() => {
-                openModal('passwordModal');
-            }, 1500);
-        } else {
-            setTimeout(() => {
-                window.location.href = 'dashboard.html';
-            }, 1500);
-        }
-        
-    } catch (error) {
-        console.error('Login error:', error);
-        const errorMsg = error.message || 'Login failed. Please try again.';
-        
-        // Show error message inline
-        showMessage(errorMsg, 'error');
-    } finally {
-        // Re-enable submit button
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Login';
-        }
+function closePasswordModal() {
+    const modal = document.getElementById('passwordModal');
+    if (modal) {
+        modal.style.display = 'none';
     }
 }
 
-// Handle password change
-async function handlePasswordChange(e) {
-    e.preventDefault();
-    
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    
-    try {
-        // Ensure utils is ready
-        if (!window.utils) {
-            throw new Error('System not initialized. Please refresh the page.');
-        }
-        
-        // Ensure Supabase is initialized by accessing the getter
-        if (!window.utils.supabase) {
-            throw new Error('System not initialized. Please refresh the page.');
-        }
-        
-        // Validation
-        if (!newPassword || !confirmPassword) {
-            throw new Error('Please fill in all fields');
-        }
-        
-        if (newPassword !== confirmPassword) {
-            throw new Error('Passwords do not match');
-        }
-        
-        if (newPassword.length < 8) {
-            throw new Error('Password must be at least 8 characters long');
-        }
-        
-        // Disable submit button
-        if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Updating...';
-        }
-        
-        console.log('Updating password...');
-        
-        // Update password in Supabase Auth
-        const { error: updateError } = await window.utils.supabase.auth.updateUser({
-            password: newPassword
-        });
-        
-        if (updateError) {
-            console.error('Auth update error:', updateError);
-            throw updateError;
-        }
-        
-        // Get current user and update profile
-        const { data: { user } } = await window.utils.supabase.auth.getUser();
-        if (!user) throw new Error('Could not identify current user');
-        
-        console.log('Updating profile for user:', user.id);
-        
-        const { error: profileError } = await window.utils.supabase
-            .from('profiles')
-            .update({ password_changed: true })
-            .eq('id', user.id);
-        
-        if (profileError) {
-            console.error('Profile update error:', profileError);
-            throw profileError;
-        }
-        
-        console.log('Password changed successfully');
-        
-        // Update stored session in case it changed
-        const { data: { session: newSession } } = await window.utils.supabase.auth.getSession();
-        if (newSession) {
-            localStorage.setItem('session', JSON.stringify(newSession));
-        }
-        
-        // Success - show message and redirect
-        closeModal('passwordModal');
-        showMessage('Password updated successfully! Redirecting to dashboard...', 'success');
-        
-        // Clear password fields
-        document.getElementById('newPassword').value = '';
-        document.getElementById('confirmPassword').value = '';
-        
-        // Redirect to dashboard
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 2000);
-        
-    } catch (error) {
-        console.error('Password change error:', error);
-        showMessage(error.message || 'Failed to update password', 'error');
-    } finally {
-        // Re-enable submit button
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Update Password';
-        }
+// Message functions
+function showError(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        errorDiv.style.backgroundColor = '#FEE2E2';
+        errorDiv.style.borderLeftColor = '#EF4444';
+        errorDiv.style.color = '#991B1B';
     }
 }
+
+function showSuccess(message) {
+    const errorDiv = document.getElementById('errorMessage');
+    if (errorDiv) {
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        errorDiv.style.backgroundColor = '#DCFCE7';
+        errorDiv.style.borderLeftColor = '#10B981';
+        errorDiv.style.color = '#166534';
+    }
+}
+
+function hideError() {
+    const errorDiv = document.getElementById('errorMessage');
+    if (errorDiv) {
+        errorDiv.style.display = 'none';
+    }
+}
+
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeAuth);
