@@ -7,7 +7,7 @@ function initializeStorage() {
     }
     if (!localStorage.getItem('user')) {
         const defaultUser = {
-            username: 'mavis',
+            username: 'Mavis',
             password: 'Password123',
             loggedIn: false,
             forcePasswordChange: true

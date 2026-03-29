@@ -14,6 +14,9 @@ const exportPdfBtn = document.getElementById('export-pdf-btn');
 const saveSettingsBtn = document.getElementById('save-settings-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const toast = document.getElementById('toast');
+const passwordModal = document.getElementById('password-modal');
+const passwordChangeForm = document.getElementById('password-change-form');
+const loader = document.getElementById('loader');
 
 // Views
 const dashboardView = document.getElementById('dashboard-view');
@@ -44,6 +47,7 @@ function initApp() {
     exportPdfBtn.addEventListener('click', exportToPDF);
     searchBar.addEventListener('input', renderPayments);
     monthFilter.addEventListener('change', renderPayments);
+    passwordChangeForm.addEventListener('submit', handlePasswordChange);
 
     // Navigation
     dashboardLink.addEventListener('click', (e) => {
@@ -67,31 +71,59 @@ function initApp() {
     renderPayments();
 }
 
-// Show dashboard and hide login
-function showDashboard() {
-    loginPage.style.display = 'none';
-    dashboard.style.display = 'flex';
-    showView(dashboardView);
+// Show password change modal
+function showPasswordModal() {
+    passwordModal.style.display = 'block';
+}
+
+// Handle password change
+function handlePasswordChange(e) {
+    e.preventDefault();
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (newPassword !== confirmPassword) {
+        showToast('Passwords do not match!', true);
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        showToast('Password must be at least 6 characters!', true);
+        return;
+    }
+
+    const user = getUser();
+    user.password = newPassword;
+    user.forcePasswordChange = false;
+    saveUser(user);
+    showToast('Password changed successfully!');
+    passwordModal.style.display = 'none';
+    showDashboard();
 }
 
 // Show a specific view
 function showView(view) {
-    // Hide all views
-    document.querySelectorAll('.view').forEach(v => {
-        v.classList.remove('active');
-    });
+    showLoader();
+    setTimeout(() => {
+        // Hide all views
+        document.querySelectorAll('.view').forEach(v => {
+            v.classList.remove('active');
+        });
 
-    // Show selected view
-    view.classList.add('active');
+        // Show selected view
+        view.classList.add('active');
 
-    // Update active link
-    const links = [dashboardLink, addPaymentLink, reportsLink, settingsLink];
-    links.forEach(link => link.classList.remove('active'));
+        // Update active link
+        const links = [dashboardLink, addPaymentLink, reportsLink, settingsLink];
+        links.forEach(link => link.classList.remove('active'));
 
-    if (view === dashboardView) dashboardLink.classList.add('active');
-    if (view === addPaymentView) addPaymentLink.classList.add('active');
-    if (view === reportsView) reportsLink.classList.add('active');
-    if (view === settingsView) settingsLink.classList.add('active');
+        if (view === dashboardView) dashboardLink.classList.add('active');
+        if (view === addPaymentView) addPaymentLink.classList.add('active');
+        if (view === reportsView) reportsLink.classList.add('active');
+        if (view === settingsView) settingsLink.classList.add('active');
+
+        hideLoader();
+    }, 500); // Simulate loading time
 }
 
 // Handle login
@@ -105,7 +137,11 @@ function handleLogin(e) {
         user.loggedIn = true;
         saveUser(user);
         showToast('Login successful!');
-        showDashboard();
+        if (username !== 'Mavis') {
+            showPasswordModal();
+        } else {
+            showDashboard();
+        }
     } else {
         showToast('Invalid username or password!', true);
     }
@@ -201,14 +237,14 @@ function updateSummaryCards(payments) {
     document.getElementById('paid-members').textContent = paidMembers;
 }
 
-// Show toast notification
-function showToast(message, isError = false) {
-    toast.textContent = message;
-    toast.style.background = isError ? '#ef4444' : 'var(--primary-color)';
-    toast.style.display = 'block';
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 3000);
+// Show loader
+function showLoader() {
+    loader.style.display = 'flex';
+}
+
+// Hide loader
+function hideLoader() {
+    loader.style.display = 'none';
 }
 
 // Handle saving settings
