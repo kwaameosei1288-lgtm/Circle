@@ -53,7 +53,7 @@ async function initializeAuth() {
 
 // Wait for dependencies with better error handling
 async function waitForDependencies() {
-    const maxAttempts = 50; // 5 seconds
+    const maxAttempts = 100; // 10 seconds
     let attempts = 0;
 
     while (attempts < maxAttempts) {

@@ -241,12 +241,17 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 32px;
     box-shadow: var(--shadow-light);
     position: relative;
     z-index: 2;
     animation: bounceIn 0.8s ease-out;
+    padding: 10px;
+}
+
+.logo-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
 }
 
 .logo-pulse {
@@ -574,7 +579,10 @@
 .modal-content {
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(20px);
-    margin: 10% auto;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     padding: 0;
     border-radius: var(--border-radius);
     width: 90%;
