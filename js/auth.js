@@ -444,6 +444,12 @@ async function handlePasswordChange(e) {
         
         console.log('Password changed successfully');
         
+        // Update stored session in case it changed
+        const { data: { session: newSession } } = await window.utils.supabase.auth.getSession();
+        if (newSession) {
+            localStorage.setItem('session', JSON.stringify(newSession));
+        }
+        
         // Success - show message and redirect
         closeModal('passwordModal');
         showMessage('Password updated successfully! Redirecting to dashboard...', 'success');

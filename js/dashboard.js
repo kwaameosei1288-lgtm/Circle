@@ -30,6 +30,18 @@ document.addEventListener('DOMContentLoaded', async function() {
             await window.utils.supabase.auth.setSession(sessionData);
         }
 
+        // Verify the session is valid
+        const { data: { user }, error } = await window.utils.supabase.auth.getUser();
+        if (error || !user) {
+            console.error('Invalid session, redirecting to login:', error);
+            localStorage.removeItem('session');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userId');
+            window.location.href = 'index.html';
+            return;
+        }
+
         // Hide bootloader
         setTimeout(() => {
             document.getElementById('bootloader').style.display = 'none';
@@ -92,49 +104,91 @@ async function initializeDashboard() {
 
 async function loadDashboardStats() {
     try {
-        // Get total contributions
-        const { data: contributions, error: contribError } = await window.utils.supabase
-            .from('contributions')
-            .select('amount, status')
-            .eq('status', 'paid');
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
 
-        if (contribError) throw contribError;
+        // Get total contributions (user's own or all if admin/treasurer)
+        try {
+            let query = window.utils.supabase
+                .from('contributions')
+                .select('amount, status')
+                .eq('status', 'paid');
+            
+            if (userRole !== 'admin' && userRole !== 'treasurer') {
+                query = query.eq('member_id', userId);
+            }
+            
+            const { data: contributions, error: contribError } = await query;
+            if (contribError) throw contribError;
 
-        const totalContributions = contributions.reduce((sum, c) => sum + c.amount, 0);
-        document.getElementById('totalContributions').textContent = window.utils.formatCurrency(totalContributions);
+            const totalContributions = contributions.reduce((sum, c) => sum + c.amount, 0);
+            document.getElementById('totalContributions').textContent = window.utils.formatCurrency(totalContributions);
 
-        // Get total received (same as contributions for now)
-        document.getElementById('totalReceived').textContent = window.utils.formatCurrency(totalContributions);
+            // Get total received (same as contributions for now)
+            document.getElementById('totalReceived').textContent = window.utils.formatCurrency(totalContributions);
+        } catch (error) {
+            console.error('Error loading contributions:', error);
+            document.getElementById('totalContributions').textContent = 'N/A';
+            document.getElementById('totalReceived').textContent = 'N/A';
+        }
 
-        // Get outstanding payments
-        const { data: outstanding, error: outstandingError } = await window.utils.supabase
-            .from('contributions')
-            .select('amount')
-            .eq('status', 'pending');
+        // Get outstanding payments (user's own or all if admin/treasurer)
+        try {
+            let query = window.utils.supabase
+                .from('contributions')
+                .select('amount')
+                .eq('status', 'pending');
+            
+            if (userRole !== 'admin' && userRole !== 'treasurer') {
+                query = query.eq('member_id', userId);
+            }
+            
+            const { data: outstanding, error: outstandingError } = await query;
+            if (outstandingError) throw outstandingError;
 
-        if (outstandingError) throw outstandingError;
+            const outstandingAmount = outstanding.reduce((sum, c) => sum + c.amount, 0);
+            document.getElementById('outstandingPayments').textContent = window.utils.formatCurrency(outstandingAmount);
+        } catch (error) {
+            console.error('Error loading outstanding payments:', error);
+            document.getElementById('outstandingPayments').textContent = 'N/A';
+        }
 
-        const outstandingAmount = outstanding.reduce((sum, c) => sum + c.amount, 0);
-        document.getElementById('outstandingPayments').textContent = window.utils.formatCurrency(outstandingAmount);
+        // Get welfare requests (user's own or all if welfare officer)
+        try {
+            let query = window.utils.supabase
+                .from('welfare_requests')
+                .select('id')
+                .eq('status', 'pending');
+            
+            if (userRole !== 'admin' && userRole !== 'welfare_officer' && userRole !== 'assistant_welfare_officer') {
+                query = query.eq('user_id', userId);
+            }
+            
+            const { data: welfare, error: welfareError } = await query;
+            if (welfareError) throw welfareError;
 
-        // Get welfare requests
-        const { data: welfare, error: welfareError } = await window.utils.supabase
-            .from('welfare_requests')
-            .select('id')
-            .eq('status', 'pending');
+            document.getElementById('welfareRequests').textContent = welfare.length;
+        } catch (error) {
+            console.error('Error loading welfare requests:', error);
+            document.getElementById('welfareRequests').textContent = '0';
+        }
 
-        if (welfareError) throw welfareError;
-
-        document.getElementById('welfareRequests').textContent = welfare.length;
-
-        // Get active members
-        const { data: members, error: membersError } = await window.utils.supabase
-            .from('profiles')
-            .select('id');
-
-        if (membersError) throw membersError;
-
-        document.getElementById('activeMembers').textContent = members.length;
+        // Get active members (only if admin)
+        try {
+            if (userRole === 'admin') {
+                const { data: members, error: membersError } = await window.utils.supabase
+                    .from('profiles')
+                    .select('id');
+                
+                if (membersError) throw membersError;
+                document.getElementById('activeMembers').textContent = members.length;
+            } else {
+                document.getElementById('activeMembers').textContent = 'N/A';
+            }
+        } catch (error) {
+            console.error('Error loading members:', error);
+            document.getElementById('activeMembers').textContent = 'N/A';
+        }
 
     } catch (error) {
         console.error('Error loading dashboard stats:', error);
@@ -143,7 +197,10 @@ async function loadDashboardStats() {
 
 async function loadRecentContributions() {
     try {
-        const { data: contributions, error } = await window.utils.supabase
+        const userId = localStorage.getItem('userId');
+        const userRole = localStorage.getItem('userRole');
+
+        let query = window.utils.supabase
             .from('contributions')
             .select(`
                 *,
@@ -151,6 +208,12 @@ async function loadRecentContributions() {
             `)
             .order('created_at', { ascending: false })
             .limit(5);
+        
+        if (userRole !== 'admin' && userRole !== 'treasurer') {
+            query = query.eq('member_id', userId);
+        }
+
+        const { data: contributions, error } = await query;
 
         if (error) throw error;
 
