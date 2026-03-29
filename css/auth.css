@@ -56,26 +56,37 @@
     position: relative;
     display: flex;
     align-items: center;
+    width: 100%;
 }
 
 .password-group input {
     flex: 1;
+    padding-right: 40px;
 }
 
 .password-toggle {
     position: absolute;
-    right: 12px;
+    right: 10px;
     background: none;
     border: none;
     color: var(--text-color);
     cursor: pointer;
-    font-size: 16px;
-    padding: 8px;
+    font-size: 18px;
+    padding: 6px 8px;
     transition: color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    top: 0;
 }
 
 .password-toggle:hover {
     color: var(--primary-color);
+}
+
+.password-toggle:active {
+    transform: scale(0.95);
 }
 
 /* Password Strength Meter */

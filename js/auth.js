@@ -3,21 +3,33 @@
 // Wait for utils to be ready
 function waitForUtils() {
     return new Promise((resolve) => {
+        console.log('Checking for utils...');
+        
         if (window.utils && window.utils.supabase) {
+            console.log('Utils and supabase ready immediately');
             resolve();
         } else {
+            let checkCount = 0;
             const checkInterval = setInterval(() => {
+                checkCount++;
+                console.log(`Attempt ${checkCount}: window.utils =`, !!window.utils, 'supabase =', !!window.utils?.supabase);
+                
                 if (window.utils && window.utils.supabase) {
                     clearInterval(checkInterval);
+                    console.log('Utils ready after', checkCount, 'attempts');
                     resolve();
                 }
             }, 100);
-            // Timeout after 5 seconds
+            
+            // Timeout after 8 seconds
             setTimeout(() => {
                 clearInterval(checkInterval);
-                console.error('Utils initialization timeout');
+                console.error('Utils initialization timeout after', checkCount, 'attempts');
+                console.log('window.utils =', window.utils);
+                console.log('window.supabase =', !!window.supabase);
+                console.log('window.config =', window.config);
                 resolve();
-            }, 5000);
+            }, 8000);
         }
     });
 }
@@ -193,9 +205,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 async function checkExistingSession() {
     try {
         if (!window.utils || !window.utils.supabase) {
-            console.log('Utils not ready yet');
+            console.log('Utils not ready yet, skipping existing session check');
             return;
         }
+        
+        console.log('Checking for existing session...');
         
         const { data: { session } } = await window.utils.supabase.auth.getSession();
         if (session) {
@@ -249,8 +263,26 @@ async function handleLogin(e) {
         }
         
         // Ensure utils is ready
-        if (!window.utils || !window.utils.supabase) {
-            throw new Error('System not initialized. Please refresh the page.');
+        if (!window.utils) {
+            console.error('window.utils is not defined:', window.utils);
+            console.error('Available globals:', Object.keys(window).filter(k => !k.startsWith('webkit')).slice(0, 20));
+            throw new Error('System loading... Please wait a moment and try again.');
+        }
+        
+        if (!window.utils.supabase) {
+            console.error('Supabase client not initialized');
+            console.error('window.supabase library:', !!window.supabase);
+            console.error('window.config:', window.config);
+            // Try to initialize it
+            if (window.utils.initSupabase) {
+                console.log('Attempting manual initialization...');
+                window.utils.initSupabase();
+                if (!window.utils.supabase) {
+                    throw new Error('Failed to initialize Supabase. Check your configuration.');
+                }
+            } else {
+                throw new Error('Supabase not initialized. Please refresh the page.');
+            }
         }
         
         // Disable submit button and show loading state
