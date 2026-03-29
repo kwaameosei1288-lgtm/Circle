@@ -22,10 +22,13 @@
     margin-bottom: 30px;
 }
 
-.auth-header i {
-    font-size: 48px;
-    color: var(--primary-color);
+.auth-header img.logo {
+    width: 48px;
+    height: 48px;
     margin-bottom: 10px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .auth-header h1 {
