@@ -3,255 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Helping Hands Circle – Treasurer Dashboard</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <title>Helping Hands Circle - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Main Dashboard -->
-    <div id="dashboard" class="dashboard-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo">
-                <i class="fas fa-hands-helping"></i>
-                <h2>Helping Hands</h2>
-            </div>
-            <ul class="nav-links">
-                <li><a href="#" id="dashboard-link" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                <li><a href="#" id="add-payment-link"><i class="fas fa-money-bill-wave"></i> Add Payment</a></li>
-                <li><a href="#" id="reports-link"><i class="fas fa-file-alt"></i> Reports</a></li>
-                <li><a href="#" id="settings-link"><i class="fas fa-cog"></i> Settings</a></li>
-            </ul>
-            <div class="user-profile">
-                <p>Logged in as: <span id="user-name">Mavis</span></p>
-                <button id="logout-btn" class="btn">Logout</button>
-            </div>
-        </div>
-
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Dashboard View -->
-            <div id="dashboard-view" class="view active">
-                <h1>Dashboard</h1>
-                <div class="summary-cards">
-                    <div class="card">
-                        <h3>Total Expected</h3>
-                        <p id="total-expected">$0.00</p>
-                    </div>
-                    <div class="card">
-                        <h3>Total Received</h3>
-                        <p id="total-received">$0.00</p>
-                    </div>
-                    <div class="card">
-                        <h3>Outstanding Amount</h3>
-                        <p id="outstanding-amount">$0.00</p>
-                    </div>
-                    <div class="card">
-                        <h3>Number of Paid Members</h3>
-                        <p id="paid-members">0</p>
-                    </div>
-                </div>
-
-                <!-- Payment Table -->
-                <div class="payment-table">
-                    <h2>Recent Payments</h2>
-                    <div class="table-controls">
-                        <input type="text" id="search-bar" placeholder="Search...">
-                        <select id="month-filter">
-                            <option value="">All Months</option>
-                            <option value="January">January</option>
-                            <option value="February">February</option>
-                            <option value="March">March</option>
-                            <option value="April">April</option>
-                            <option value="May">May</option>
-                            <option value="June">June</option>
-                            <option value="July">July</option>
-                            <option value="August">August</option>
-                            <option value="September">September</option>
-                            <option value="October">October</option>
-                            <option value="November">November</option>
-                            <option value="December">December</option>
-                        </select>
-                    </div>
-                    <table id="payments-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Amount</th>
-                                <th>Date</th>
-                                <th>Month</th>
-                                <th>Status</th>
-                                <th>Transaction ID</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="payments-body">
-                            <!-- Dynamic content -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Add Payment View -->
-            <div id="add-payment-view" class="view">
-                <h1>Add Payment</h1>
-                <form id="payment-form" class="form-container">
-                    <div class="form-group">
-                        <label for="member-name">Member Name</label>
-                        <input type="text" id="member-name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="phone-number">Phone Number</label>
-                        <input type="text" id="phone-number" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="amount-paid">Amount Paid</label>
-                        <input type="number" id="amount-paid" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="payment-date">Payment Date</label>
-                        <input type="date" id="payment-date" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="payment-month">Month</label>
-                        <input type="text" id="payment-month" placeholder="e.g., March 2026" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="payment-method">Payment Method</label>
-                        <select id="payment-method" required>
-                            <option value="MoMo">MoMo</option>
-                            <option value="Bank">Bank</option>
-                            <option value="Cash">Cash</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="transaction-id">Transaction ID</label>
-                        <input type="text" id="transaction-id" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="notes">Notes</label>
-                        <textarea id="notes"></textarea>
-                    </div>
-                    <button type="submit" class="btn">Save Payment</button>
-                </form>
-            </div>
-
-            <!-- Reports View -->
-            <div id="reports-view" class="view">
-                <h1>Reports</h1>
-                <div class="form-container">
-                    <div class="report-controls">
-                        <select id="report-month">
-                            <option value="">Select Month</option>
-                            <option value="January">January</option>
-                            <option value="February">February</option>
-                            <option value="March">March</option>
-                            <option value="April">April</option>
-                            <option value="May">May</option>
-                            <option value="June">June</option>
-                            <option value="July">July</option>
-                            <option value="August">August</option>
-                            <option value="September">September</option>
-                            <option value="October">October</option>
-                            <option value="November">November</option>
-                            <option value="December">December</option>
-                        </select>
-                        <button id="generate-report-btn" class="btn">Generate Report</button>
-                        <button id="export-pdf-btn" class="btn">Export to PDF</button>
-                    </div>
-                    <div id="report-content" class="payment-table">
-                        <!-- Dynamic report content -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Settings View -->
-            <div id="settings-view" class="view">
-                <h1>Settings</h1>
-                <div class="form-container">
-                    <div class="settings-form">
-                        <div class="form-group">
-                            <label for="treasurer-name">Treasurer Name</label>
-                            <input type="text" id="treasurer-name" value="Mavis">
-                        </div>
-                        <div class="form-group">
-                            <label for="change-password">Change Password</label>
-                            <input type="password" id="change-password" placeholder="New Password">
-                        </div>
-                        <button id="save-settings-btn" class="btn">Save Settings</button>
-                    </div>
-                </div>
-            </div>
+    <div id="bootloader" class="bootloader">
+        <div class="bootloader-content">
+            <div class="spinner"></div>
+            <h2>Loading Helping Hands Circle...</h2>
         </div>
     </div>
-
-    <!-- Login Modal -->
-    <div id="login-modal" class="modal">
-        <div class="modal-content login-modal-content">
-            <h1>Helping Hands Circle</h1>
-            <p>Treasurer Management System</p>
-            <form id="login-form">
-                <div class="input-group">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i class="fas fa-hand-holding-heart"></i>
+                <h1>Helping Hands Circle</h1>
+                <p>Stronger Together</p>
+            </div>
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
                     <label for="username">Username</label>
-                    <input type="text" id="username" placeholder="Enter username" required>
-                    <div class="input-feedback" id="username-feedback"></div>
+                    <input type="text" id="username" name="username" required>
                 </div>
-                <div class="input-group">
+                <div class="form-group">
                     <label for="password">Password</label>
-                    <input type="password" id="password" placeholder="Enter password" required>
-                    <div class="input-feedback" id="password-feedback"></div>
+                    <input type="password" id="password" name="password" required>
                 </div>
-                <button type="submit" class="btn" id="login-btn">
-                    <span class="btn-text">Login</span>
-                    <div class="btn-spinner" id="login-spinner"></div>
-                </button>
+                <button type="submit" class="btn-primary">Login</button>
             </form>
+            <div id="errorMessage" class="error-message"></div>
         </div>
     </div>
 
     <!-- Password Change Modal -->
-    <div id="password-modal" class="modal">
+    <div id="passwordModal" class="modal">
         <div class="modal-content">
-            <h2>Change Password</h2>
-            <p>For security reasons, please change your password to continue.</p>
-            <form id="password-change-form">
+            <div class="modal-header">
+                <h2>Change Password</h2>
+                <span class="close">&times;</span>
+            </div>
+            <form id="passwordForm">
                 <div class="form-group">
-                    <label for="new-password">New Password</label>
-                    <input type="password" id="new-password" required>
+                    <label for="newPassword">New Password</label>
+                    <input type="password" id="newPassword" name="newPassword" required>
                 </div>
                 <div class="form-group">
-                    <label for="confirm-password">Confirm Password</label>
-                    <input type="password" id="confirm-password" required>
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
                 </div>
-                <button type="submit" class="btn">Change Password</button>
+                <button type="submit" class="btn-primary">Update Password</button>
             </form>
         </div>
     </div>
 
-    <!-- Change Password Button (appears after login) -->
-    <div id="change-password-prompt" class="change-password-prompt">
-        <div class="prompt-content">
-            <h3>Security Update Required</h3>
-            <p>Please change your password to secure your account.</p>
-            <button id="change-password-btn" class="btn">Change Password</button>
-        </div>
-    </div>
-
-    <!-- Toast Notifications -->
-    <div id="toast" class="toast"></div>
-
-    <!-- Loader -->
-    <div id="loader" class="loader">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- Scripts -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="storage.js"></script>
-    <script src="app.js"></script>
-    <script src="pdf.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lib/config.js"></script>
+    <script src="lib/utils.js"></script>
+    <script src="js/auth.js"></script>
 </body>
 </html>

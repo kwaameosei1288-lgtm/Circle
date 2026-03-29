@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helping Hands Circle - Welfare</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="bootloader" class="bootloader">
+        <div class="bootloader-content">
+            <div class="spinner"></div>
+            <h2>Loading Welfare...</h2>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-hand-holding-heart"></i>
+                <h2>Helping Hands Circle</h2>
+                <p>Stronger Together</p>
+            </div>
+            <nav class="sidebar-menu">
+                <ul>
+                    <li><a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#" data-page="contributions"><i class="fas fa-money-bill-wave"></i> Contributions</a></li>
+                    <li><a href="#" class="active" data-page="welfare"><i class="fas fa-heart"></i> Welfare</a></li>
+                    <li><a href="#" data-page="reports"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                    <li><a href="#" data-page="members"><i class="fas fa-users"></i> Members</a></li>
+                    <li><a href="#" data-page="profile"><i class="fas fa-user"></i> Profile</a></li>
+                    <li><a href="#" data-page="settings"><i class="fas fa-cog"></i> Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <header class="header">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="header-title">Welfare</h1>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <span id="userName">User</span>
+                    </div>
+                    <button class="btn-secondary" onclick="window.utils.logout()">Logout</button>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- Request Welfare Button -->
+                <div style="margin-bottom: 20px;">
+                    <button class="btn-primary" onclick="openRequestModal()">Request Welfare</button>
+                </div>
+
+                <!-- Welfare Requests Table -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 class="table-title">Welfare Requests</h2>
+                        <div class="table-actions">
+                            <select id="statusFilter" class="form-group" style="margin: 0; width: auto;">
+                                <option value="">All Status</option>
+                                <option value="pending">Pending</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Requester</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="welfareTable">
+                            <!-- Data will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Request Welfare Modal -->
+    <div id="requestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Request Welfare Support</h2>
+                <span class="close" onclick="closeModal('requestModal')">&times;</span>
+            </div>
+            <form id="requestForm" class="modal-form">
+                <div class="form-group">
+                    <label for="requestType">Request Type</label>
+                    <select id="requestType" required>
+                        <option value="">Select Type</option>
+                        <option value="marriage">Marriage - GHS 2000</option>
+                        <option value="funeral_parents">Funeral (Parents) - GHS 3000</option>
+                        <option value="sickness_serious">Sickness - Serious - GHS 1000</option>
+                        <option value="sickness_minor">Sickness - Minor - Support in Kind</option>
+                        <option value="external_support">External Support - Manual Approval</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="reason">Reason/Details</label>
+                    <textarea id="reason" rows="4" placeholder="Please provide details about your request..." required></textarea>
+                </div>
+                <div class="form-group" id="amountGroup" style="display: none;">
+                    <label for="customAmount">Custom Amount (GHS)</label>
+                    <input type="number" id="customAmount" step="0.01" placeholder="Enter amount">
+                </div>
+                <button type="submit" class="btn-primary">Submit Request</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lib/config.js"></script>
+    <script src="lib/utils.js"></script>
+    <script src="js/welfare.js"></script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Helping Hands Circle - Settings</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div id="bootloader" class="bootloader">
+        <div class="bootloader-content">
+            <div class="spinner"></div>
+            <h2>Loading Settings...</h2>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <i class="fas fa-hand-holding-heart"></i>
+                <h2>Helping Hands Circle</h2>
+                <p>Stronger Together</p>
+            </div>
+            <nav class="sidebar-menu">
+                <ul>
+                    <li><a href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                    <li><a href="#" data-page="contributions"><i class="fas fa-money-bill-wave"></i> Contributions</a></li>
+                    <li><a href="#" data-page="welfare"><i class="fas fa-heart"></i> Welfare</a></li>
+                    <li><a href="#" data-page="reports"><i class="fas fa-chart-bar"></i> Reports</a></li>
+                    <li><a href="#" data-page="members"><i class="fas fa-users"></i> Members</a></li>
+                    <li><a href="#" data-page="profile"><i class="fas fa-user"></i> Profile</a></li>
+                    <li><a href="#" class="active" data-page="settings"><i class="fas fa-cog"></i> Settings</a></li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <header class="header">
+                <button class="menu-toggle" id="menuToggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <h1 class="header-title">Settings</h1>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <span id="userName">User</span>
+                    </div>
+                    <button class="btn-secondary" onclick="window.utils.logout()">Logout</button>
+                </div>
+            </header>
+
+            <div class="content">
+                <!-- Settings Cards -->
+                <div class="dashboard-grid">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-moon"></i>
+                            </div>
+                            <div>
+                                <h3>Theme</h3>
+                                <p>Toggle between light and dark mode</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="switch">
+                                <input type="checkbox" id="themeToggle">
+                                <span class="slider"></span>
+                            </label>
+                            <span id="themeLabel">Light Mode</span>
+                        </div>
+                    </div>
+                    <div class="card" id="adminSettings" style="display: none;">
+                        <div class="card-header">
+                            <div class="card-icon">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div>
+                                <h3>System Administration</h3>
+                                <p>Admin-only system controls</p>
+                            </div>
+                        </div>
+                        <button class="btn-danger" onclick="confirmResetSystem()">Reset System</button>
+                        <p style="font-size: 12px; color: #6B7280; margin-top: 10px;">
+                            This will clear all data. Use with extreme caution.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- System Information -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2 class="table-title">System Information</h2>
+                    </div>
+                    <div style="padding: 20px;">
+                        <p><strong>Version:</strong> 1.0.0</p>
+                        <p><strong>Last Updated:</strong> March 29, 2026</p>
+                        <p><strong>Database:</strong> Supabase</p>
+                        <p><strong>Hosting:</strong> Vercel</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Action</h2>
+                <span class="close" onclick="closeModal('confirmModal')">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to proceed?</p>
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn-danger" id="confirmYes">Yes</button>
+                    <button class="btn-secondary" onclick="closeModal('confirmModal')">No</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="lib/config.js"></script>
+    <script src="lib/utils.js"></script>
+    <script src="js/settings.js"></script>
+</body>
+</html>
