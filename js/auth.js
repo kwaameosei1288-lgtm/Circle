@@ -1,6 +1,31 @@
 // Authentication Logic
 
-document.addEventListener('DOMContentLoaded', function() {
+// Wait for utils to be ready
+function waitForUtils() {
+    return new Promise((resolve) => {
+        if (window.utils && window.utils.supabase) {
+            resolve();
+        } else {
+            const checkInterval = setInterval(() => {
+                if (window.utils && window.utils.supabase) {
+                    clearInterval(checkInterval);
+                    resolve();
+                }
+            }, 100);
+            // Timeout after 5 seconds
+            setTimeout(() => {
+                clearInterval(checkInterval);
+                console.error('Utils initialization timeout');
+                resolve();
+            }, 5000);
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Ensure utils is initialized
+    await waitForUtils();
+    
     // Check if user is already logged in
     checkExistingSession();
     
@@ -31,6 +56,11 @@ document.addEventListener('DOMContentLoaded', function() {
 // Check for existing session
 async function checkExistingSession() {
     try {
+        if (!window.utils || !window.utils.supabase) {
+            console.log('Utils not ready yet');
+            return;
+        }
+        
         const { data: { session } } = await window.utils.supabase.auth.getSession();
         if (session) {
             // Verify user profile exists
@@ -49,7 +79,7 @@ async function checkExistingSession() {
             }
         }
     } catch (error) {
-        console.log('No existing session');
+        console.log('No existing session or error checking session:', error.message);
     }
 }
 
@@ -65,6 +95,11 @@ async function handleLogin(e) {
     errorElement.textContent = '';
     
     try {
+        // Ensure utils is ready
+        if (!window.utils || !window.utils.supabase) {
+            throw new Error('System not initialized. Please refresh the page.');
+        }
+        
         // Disable submit button and show loading state
         const submitBtn = event.target.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
@@ -129,8 +164,10 @@ async function handleLogin(e) {
     } finally {
         // Re-enable submit button
         const submitBtn = event.target.querySelector('button[type="submit"]');
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Login';
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Login';
+        }
     }
 }
 
@@ -151,6 +188,11 @@ async function handlePasswordChange(e) {
     const submitBtn = event.target.querySelector('button[type="submit"]');
     
     try {
+        // Ensure utils is ready
+        if (!window.utils || !window.utils.supabase) {
+            throw new Error('System not initialized. Please refresh the page.');
+        }
+        
         // Validation
         if (!newPassword || !confirmPassword) {
             throw new Error('Please fill in all fields');

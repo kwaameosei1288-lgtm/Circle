@@ -1,32 +1,55 @@
 // Dashboard Logic
 
 document.addEventListener('DOMContentLoaded', async function() {
-    // Check authentication
-    const session = localStorage.getItem('session');
-    if (!session) {
+    try {
+        // Check authentication
+        const session = localStorage.getItem('session');
+        if (!session) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Wait for utils to be initialized
+        if (!window.utils || !window.utils.supabase) {
+            // Wait up to 5 seconds for utils to load
+            for (let i = 0; i < 50; i++) {
+                if (window.utils && window.utils.supabase) {
+                    break;
+                }
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            if (!window.utils || !window.utils.supabase) {
+                throw new Error('Failed to initialize system. Please refresh the page.');
+            }
+        }
+
+        // Initialize Supabase with session
+        const sessionData = JSON.parse(session);
+        if (window.utils.supabase.auth.setSession) {
+            await window.utils.supabase.auth.setSession(sessionData);
+        }
+
+        // Hide bootloader
+        setTimeout(() => {
+            document.getElementById('bootloader').style.display = 'none';
+        }, 1000);
+
+        // Initialize dashboard
+        await initializeDashboard();
+
+        // Sidebar toggle
+        document.getElementById('menuToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            sidebar.classList.toggle('open');
+            mainContent.classList.toggle('sidebar-open');
+        });
+    } catch (error) {
+        console.error('Dashboard initialization error:', error);
         window.location.href = 'index.html';
-        return;
     }
-
-    // Initialize Supabase with session
-    const sessionData = JSON.parse(session);
-    window.utils.supabase.auth.setSession(sessionData);
-
-    // Hide bootloader
-    setTimeout(() => {
-        document.getElementById('bootloader').style.display = 'none';
-    }, 1000);
-
-    // Initialize dashboard
-    await initializeDashboard();
-
-    // Sidebar toggle
-    document.getElementById('menuToggle').addEventListener('click', function() {
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        sidebar.classList.toggle('open');
-        mainContent.classList.toggle('sidebar-open');
-    });
+});
 
     // Navigation
     document.querySelectorAll('.sidebar-menu a').forEach(link => {
